@@ -10,7 +10,7 @@ pip install opencv-python pycocotools matplotlib onnxruntime onnx
 nifti_to_numpy:
 
 --input_file_path datasets/zenodo/COVID-19-CT-Seg_20cases/coronacases_001.nii.gz --output_file_path working_data/image_coronacases_001.npy --transpose --rotate
---input_file_path datasets/zenodo/Lung_Mask/coronacases_001.nii.gz --output_file_path working_data/masks_coronacases_001.npy --transpose --rotate
+--input_file_path datasets/zenodo/Lung_Mask/coronacases_001.nii.gz --output_file_path working_data/masks_coronacases_001.npy --rotate
 
 main:
 

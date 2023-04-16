@@ -14,4 +14,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+- The script **main.py** now works without transpose or swap operations.
 - The notebook **image_transformations.ipynb** now loads a copy of the slice prepared for demonstration porpoises.

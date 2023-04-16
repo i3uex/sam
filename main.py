@@ -3,7 +3,6 @@ import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Tuple
-from segment_anything import sam_model_registry, SamPredictor
 
 import humanize
 import matplotlib.pyplot as plt
@@ -12,6 +11,7 @@ import torch
 import yaml
 from rich import print
 from scipy.ndimage import center_of_mass
+from segment_anything import sam_model_registry, SamPredictor
 from skimage import measure
 
 from tools.argparse_helper import ArgumentParserHelper
@@ -63,10 +63,12 @@ def show_points(coords, labels, ax, marker_size=375):
     ax.scatter(neg_points[:, 0], neg_points[:, 1], color='red', marker='*', s=marker_size, edgecolor='white',
                linewidth=1.25)
 
+
 # TODO: use this method only when needed
 def to_greyscale(image: np.ndarray) -> np.ndarray:
     greyscale_image = (image - image.min()) / (image.max() - image.min()) * 255
     return greyscale_image
+
 
 def windowing(image: np.ndarray) -> np.ndarray:
     windowed_image = image[:, :].clip(
@@ -131,10 +133,10 @@ def process_image_slice(image_file_path: Path,
 
     masks, scores, logits = predictor.predict(
         point_coords=np.array([
-            [lungs_centers_of_mass[0][1], lungs_centers_of_mass[0][0]],
-            [lungs_centers_of_mass[1][1], lungs_centers_of_mass[1][0]]
+            [lungs_centers_of_mass[0][0], lungs_centers_of_mass[0][1]],
+            [lungs_centers_of_mass[1][1], lungs_centers_of_mass[1][1]]
         ]),
-        point_labels=np.array([0, 1]),
+        point_labels=np.array([1, 0]),
         multimask_output=True)
 
     for i, (mask, score) in enumerate(zip(masks, scores)):
@@ -143,10 +145,10 @@ def process_image_slice(image_file_path: Path,
         show_mask(mask, plt.gca())
         show_points(
             np.array([
-                [lungs_centers_of_mass[0][1], lungs_centers_of_mass[0][0]],
-                [lungs_centers_of_mass[1][1], lungs_centers_of_mass[1][0]]
+                [lungs_centers_of_mass[0][0], lungs_centers_of_mass[0][1]],
+                [lungs_centers_of_mass[1][0], lungs_centers_of_mass[1][1]]
             ]),
-            np.array([0, 1]),
+            np.array([1, 0]),
             plt.gca())
         plt.title(f"Mask {i + 1}, Score: {score:.3f}", fontsize=18)
         plt.axis('off')
@@ -155,7 +157,7 @@ def process_image_slice(image_file_path: Path,
     # Hipótesis: coge el más pequeño con el score más alto
     # https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb
 
-        # mask_generator = SamAutomaticMaskGenerator(sam)
+    # mask_generator = SamAutomaticMaskGenerator(sam)
     # masks = mask_generator.generate(ct_image)
     #
     # plt.figure(figsize=(20, 20))
@@ -193,8 +195,9 @@ def process_image_slice(image_file_path: Path,
 
         # Save a plot with SAM's prompt
         figure = plt.figure()
+        plt.gca().invert_yaxis()
         plt.style.use('grayscale')
-        plt.pcolormesh(image_slice.T)
+        plt.pcolormesh(image_slice)
         plt.colorbar()
 
         color = plt.colormaps['rainbow'](np.linspace(0, 1, len(lungs_contours)))
