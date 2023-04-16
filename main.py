@@ -14,6 +14,7 @@ from scipy.ndimage import center_of_mass
 from segment_anything import sam_model_registry, SamPredictor
 from skimage import measure
 
+from sam_model import SamModel
 from tools.argparse_helper import ArgumentParserHelper
 
 logger = logging.getLogger(__name__)
@@ -77,13 +78,38 @@ def windowing(image: np.ndarray) -> np.ndarray:
     return windowed_image
 
 
-def process_image_slice(image_file_path: Path,
+def get_sam_predictor(sam_model: SamModel) -> SamPredictor:
+    """
+    Get an instance of the SAM predictor, given the model details.
+
+    :param sam_model: model name and checkpoint to use.
+
+    :return: an instance of the SAM predictor, given the model details.
+    :rtype: SamPredictor
+    """
+
+    logger.info('Get SAM predictor instance')
+    logger.debug(f'get_sam_predictor('
+                 f'sam_model={sam_model})')
+
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    logger.info(f'Device for SAM predictor: {device}')
+    sam = sam_model_registry[sam_model.name](checkpoint=sam_model.checkpoint)
+    sam.to(device)
+    sam_predictor = SamPredictor(sam)
+
+    return sam_predictor
+
+
+def process_image_slice(sam_predictor: SamPredictor,
+                        image_file_path: Path,
                         masks_file_path: Path,
                         slice_number: int,
                         debug: bool):
     """
     Process a slice of the image.
 
+    :param sam_predictor: SAM predictor for image segmentation.
     :param image_file_path: path to the images file.
     :param masks_file_path: path to the masks file.
     :param slice_number: slice to work with.
@@ -92,6 +118,7 @@ def process_image_slice(image_file_path: Path,
 
     logger.info('Process image slice')
     logger.debug(f'process_image_slice('
+                 f'sam_predictor="{sam_predictor}", '
                  f'image_file_path="{image_file_path}", '
                  f'masks_file_path="{masks_file_path}", '
                  f'slice_number={slice_number}, '
@@ -122,16 +149,9 @@ def process_image_slice(image_file_path: Path,
     # Use the center of mass as prompt for the segmentation
     # Include SAM contours in the debug information
 
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    # sam = sam_model_registry['vit_h'](checkpoint='model_checkpoints/sam_vit_h_4b8939.pth')
-    sam = sam_model_registry['vit_l'](checkpoint='model_checkpoints/sam_vit_l_0b3195.pth')
-    # sam = sam_model_registry['vit_b'](checkpoint='model_checkpoints/sam_vit_b_01ec64.pth')
-    sam.to(device)
+    sam_predictor.set_image(image_slice)
 
-    predictor = SamPredictor(sam)
-    predictor.set_image(image_slice)
-
-    masks, scores, logits = predictor.predict(
+    masks, scores, logits = sam_predictor.predict(
         point_coords=np.array([
             [lungs_centers_of_mass[0][0], lungs_centers_of_mass[0][1]],
             [lungs_centers_of_mass[1][1], lungs_centers_of_mass[1][1]]
@@ -310,6 +330,7 @@ def main():
             filename="debug.log",
             level=logging.DEBUG,
             format="%(asctime)-15s %(levelname)8s %(name)s %(message)s")
+        logging.getLogger("matplotlib.font_manager").disabled = True
 
     logger.info("Start processing data")
     logger.debug("main()")
@@ -331,7 +352,10 @@ def main():
         print(summary)
         return
 
-    process_image_slice(image_file_path=image_file_path,
+    sam_predictor = get_sam_predictor(SamModel.ViT_H)
+
+    process_image_slice(sam_predictor=sam_predictor,
+                        image_file_path=image_file_path,
                         masks_file_path=masks_file_path,
                         slice_number=slice_number,
                         debug=debug)
