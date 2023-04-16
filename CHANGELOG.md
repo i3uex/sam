@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+- Load images, masks, image slice and masks slices in separate methods.
 - Load the model in a separate function.
 - The script **main.py** now works without transpose or swap operations.
 - The notebook **image_transformations.ipynb** now loads a copy of the slice prepared for demonstration porpoises.

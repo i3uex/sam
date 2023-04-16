@@ -100,40 +100,127 @@ def get_sam_predictor(sam_model: SamModel) -> SamPredictor:
 
     return sam_predictor
 
+def load_image(image_file_path: Path) -> np.array:
+    """
+    Load the CT image.
 
+    :param image_file_path: path of the image file.
+
+    :return: CT image.
+    :rtype: np.array
+    """
+
+    logger.info('Load the CT image')
+    logger.debug(f'load_image('
+                 f'image_file_path="{image_file_path}")')
+
+    image = np.load(str(image_file_path))
+    return image
+
+
+def load_masks(masks_file_path: Path) -> np.array:
+    """
+    Load the CT masks.
+
+    :param masks_file_path: path of the masks file.
+
+    :return: masks for the CT image.
+    :rtype: np.array
+    """
+
+    logger.info('Load the CT image masks')
+    logger.debug(f'load_masks('
+                 f'masks_file_path="{masks_file_path}")')
+
+    masks = np.load(str(masks_file_path))
+    return masks
+
+
+def load_image_slice(image: np.array, slice_number: int) -> np.array:
+    """
+    Return a slice from a CT image, given its position. The slice is windowed
+    to improve its contrast, converted to greyscale, and expanded to RGB. It
+    checks if the slice number exists.
+
+    :param image: CT image from which to get the slice.
+    :param slice_number: slice number to get from the image.
+
+    :return: slice from a CT image.
+    :rtype: np.array
+    """
+
+    logger.info('Load a slice from a CT image')
+    logger.debug(f'load_image_slice('
+                 f'image={image.shape}, '
+                 f'slice_number={slice_number})')
+
+    assert 0 <= slice_number < image.shape[-1]
+    logger.info("Requested slice exists.")
+
+    image_slice = image[:, :, slice_number]
+    image_slice = windowing(image_slice)
+    image_slice = to_greyscale(image_slice)
+    image_slice = image_slice.astype(np.uint8)
+    image_slice = np.stack((image_slice,) * 3, axis=-1)
+
+    return image_slice
+
+def load_masks_slice(masks: np.array, slice_number: int) -> np.array:
+    """
+    Return a slice masks from the list of masks, given its position. It checks
+    if the slice number exists.
+
+    :param masks: list of masks.
+    :param slice_number: masks slice number to get from the list of masks.
+
+    :return: masks slice from a list of masks.
+    :rtype: np.array
+    """
+
+    logger.info('Load a masks slice from the list of masks')
+    logger.debug(f'load_masks_slice('
+                 f'masks={masks.shape}, '
+                 f'slice_number={slice_number})')
+
+    assert 0 <= slice_number < masks.shape[-1]
+    logger.info("Requested masks slice exists.")
+
+    masks_slice = masks[:, :, slice_number]
+
+    return masks_slice
+
+# TODO: pass a Debug object with file path properties, along with its status.
 def process_image_slice(sam_predictor: SamPredictor,
-                        image_file_path: Path,
-                        masks_file_path: Path,
+                        image: np.array,
+                        masks: np.array,
                         slice_number: int,
-                        debug: bool):
+                        debug: bool,
+                        image_file_path: Path,
+                        masks_file_path: Path):
     """
     Process a slice of the image.
 
     :param sam_predictor: SAM predictor for image segmentation.
-    :param image_file_path: path to the images file.
-    :param masks_file_path: path to the masks file.
+    :param image: array with the slices of the CT.
+    :param masks: masks for each slice of the CT.
     :param slice_number: slice to work with.
     :param debug: if True, save debug data for later inspection.
+    :param image_file_path: path to the images file, for debugging tasks.
+    :param masks_file_path: path to the masks file, for debugging tasks.
     """
 
     logger.info('Process image slice')
     logger.debug(f'process_image_slice('
                  f'sam_predictor="{sam_predictor}", '
-                 f'image_file_path="{image_file_path}", '
-                 f'masks_file_path="{masks_file_path}", '
+                 f'image={image.shape}, '
+                 f'masks="{masks.shape}", '
                  f'slice_number={slice_number}, '
-                 f'debug={debug})')
+                 f'debug={debug}, '
+                 f'image_file_path="{image_file_path}", '
+                 f'masks_file_path="{masks_file_path}")')
 
-    image = np.load(str(image_file_path))
-    image_slice = image[:, :, slice_number]
-    image_slice = windowing(image_slice)
-    image_slice = to_greyscale(image_slice)
-    image_slice = image_slice.astype(np.uint8)
-    # image_slice = image_slice.reshape(image_slice.shape[0], image_slice.shape[1], 1)
-    image_slice = np.stack((image_slice,) * 3, axis=-1)
-
-    masks = np.load(str(masks_file_path))
-    masks_slice = masks[:, :, slice_number]
+    image_slice = load_image_slice(image=image, slice_number=slice_number)
+    masks_slice = load_masks_slice(masks=masks, slice_number=slice_number)
 
     lungs_contours = []
     lungs_centers_of_mass = []
@@ -353,12 +440,16 @@ def main():
         return
 
     sam_predictor = get_sam_predictor(SamModel.ViT_H)
+    image = load_image(image_file_path=image_file_path)
+    masks = load_masks(masks_file_path=masks_file_path)
 
     process_image_slice(sam_predictor=sam_predictor,
-                        image_file_path=image_file_path,
-                        masks_file_path=masks_file_path,
+                        image=image,
+                        masks=masks,
                         slice_number=slice_number,
-                        debug=debug)
+                        debug=debug,
+                        image_file_path=image_file_path,
+                        masks_file_path=masks_file_path)
 
     end_timestamp = datetime.now()
     elapsed_seconds = (end_timestamp - start_timestamp).seconds
