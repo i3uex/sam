@@ -11,3 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Transpose and rotation options to **nifti_to_numpy.py** script.
 - Notebook explaining image transformations.
 - Project's first version.
+
+### Changed
+
+- The notebook **image_transformations.ipynb** now loads a copy of the slice prepared for demonstration porpoises.
