@@ -100,6 +100,7 @@ def get_sam_predictor(sam_model: SamModel) -> SamPredictor:
 
     return sam_predictor
 
+
 def load_image(image_file_path: Path) -> np.array:
     """
     Load the CT image.
@@ -165,6 +166,7 @@ def load_image_slice(image: np.array, slice_number: int) -> np.array:
 
     return image_slice
 
+
 def load_masks_slice(masks: np.array, slice_number: int) -> np.array:
     """
     Return a slice masks from the list of masks, given its position. It checks
@@ -188,6 +190,7 @@ def load_masks_slice(masks: np.array, slice_number: int) -> np.array:
     masks_slice = masks[:, :, slice_number]
 
     return masks_slice
+
 
 # TODO: pass a Debug object with file path properties, along with its status.
 def process_image_slice(sam_predictor: SamPredictor,
@@ -246,21 +249,6 @@ def process_image_slice(sam_predictor: SamPredictor,
         point_labels=np.array([1, 0]),
         multimask_output=True)
 
-    for i, (mask, score) in enumerate(zip(masks, scores)):
-        plt.figure(figsize=(10, 10))
-        plt.imshow(image_slice)
-        show_mask(mask, plt.gca())
-        show_points(
-            np.array([
-                [lungs_centers_of_mass[0][0], lungs_centers_of_mass[0][1]],
-                [lungs_centers_of_mass[1][0], lungs_centers_of_mass[1][1]]
-            ]),
-            np.array([1, 0]),
-            plt.gca())
-        plt.title(f"Mask {i + 1}, Score: {score:.3f}", fontsize=18)
-        plt.axis('off')
-        plt.show()
-
     # Hipótesis: coge el más pequeño con el score más alto
     # https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb
 
@@ -277,7 +265,7 @@ def process_image_slice(sam_predictor: SamPredictor,
         # Create the base file name for the debug data
         output_folder_path = DebugFolderPath / Path(image_file_path.stem)
         output_folder_path.mkdir(parents=True, exist_ok=True)
-        output_base_file_name = f'slice_{slice_number}_prompt'
+        output_base_file_name = f'slice_{slice_number}'
         output_base_file_path = output_folder_path / Path(output_base_file_name)
 
         # Save SAM's prompt to YML
@@ -297,7 +285,11 @@ def process_image_slice(sam_predictor: SamPredictor,
             prompts=prompts
         )
 
-        with open(output_base_file_path.with_suffix('.yml'), 'w') as file:
+        file_stem = f'{output_base_file_path.stem}_prompt'
+        file_path = output_base_file_path \
+            .with_stem(file_stem) \
+            .with_suffix('.yml')
+        with open(file_path, 'w') as file:
             yaml.dump(data, file, sort_keys=False)
 
         # Save a plot with SAM's prompt
@@ -314,8 +306,33 @@ def process_image_slice(sam_predictor: SamPredictor,
             lung_center_of_mass = lungs_centers_of_mass[lung_mask_index]
             plt.scatter(lung_center_of_mass[0], lung_center_of_mass[1], color=color[lung_mask_index])
 
-        figure.savefig(output_base_file_path.with_suffix('.png'), bbox_inches='tight')
+        file_path = output_base_file_path \
+            .with_stem(file_stem) \
+            .with_suffix('.png')
+        figure.savefig(file_path, bbox_inches='tight')
         plt.close()
+
+        # Save SAM segmentation
+        for i, (mask, score) in enumerate(zip(masks, scores)):
+            figure = plt.figure(figsize=(10, 10))
+            plt.imshow(image_slice)
+            show_mask(mask, plt.gca())
+            show_points(
+                np.array([
+                    [lungs_centers_of_mass[0][0], lungs_centers_of_mass[0][1]],
+                    [lungs_centers_of_mass[1][0], lungs_centers_of_mass[1][1]]
+                ]),
+                np.array([1, 0]),
+                plt.gca())
+            plt.title(f"Mask {i + 1}, Score: {score:.3f}", fontsize=18)
+            plt.axis('off')
+
+            file_stem = f'{output_base_file_path.stem}_prediction_{i}'
+            file_path = output_base_file_path \
+                .with_stem(file_stem) \
+                .with_suffix('.png')
+            figure.savefig(file_path, bbox_inches='tight')
+            plt.close()
 
 
 def parse_arguments() -> Tuple[Path, Path, int, bool, bool]:
@@ -439,7 +456,7 @@ def main():
         print(summary)
         return
 
-    sam_predictor = get_sam_predictor(SamModel.ViT_H)
+    sam_predictor = get_sam_predictor(SamModel.ViT_L)
     image = load_image(image_file_path=image_file_path)
     masks = load_masks(masks_file_path=masks_file_path)
 
