@@ -1,6 +1,11 @@
 # To Do
 
 - Get a center of mass that is inside the lung mask. Is this the centroid?
+  - Use more than a point to prompt each lung.
+- Maybe I should mark both lungs as foreground, and a point outside them as background?
+- Add method to select ideal segmentation.
+- Add method to calculate IoU between ground-truth and prediction.
+- Store results in a CSV file.
 - If all the slices are to be processed, say so in the summary.
 - Download only the needed model weights, instead of all of them.
   - Ideally, this should be done from the Python script, via a constant.
