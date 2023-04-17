@@ -265,6 +265,8 @@ def process_image_slice(sam_predictor: SamPredictor,
                 lungs_contours.append(lung_mask_contour)
                 lung_center_of_mass = center_of_mass(lung_mask)
                 lungs_centers_of_mass.append(lung_center_of_mass)
+        # Add the slice center point, it will work as background
+        lungs_centers_of_mass.append([255, 255])
         lungs_centers_of_mass = np.array(lungs_centers_of_mass).astype(np.uint)
 
         # Use the center of mass as prompt for the segmentation
@@ -273,12 +275,12 @@ def process_image_slice(sam_predictor: SamPredictor,
         sam_predictor.set_image(image_slice)
 
         # TODO: Use first center of mass for foreground, the rest for background.
-        lungs_centers_of_mass_labels = np.zeros(len(lungs_centers_of_mass))
-        lungs_centers_of_mass_labels[0] = 1
+        lungs_centers_of_mass_labels = np.ones(len(lungs_centers_of_mass))
+        lungs_centers_of_mass_labels[-1] = 0
         masks, scores, logits = sam_predictor.predict(
             point_coords=np.array(lungs_centers_of_mass),
             point_labels=lungs_centers_of_mass_labels,
-            multimask_output=True)
+            multimask_output=False)
     else:
         logger.info("There is no masks for the current slice")
 
@@ -323,12 +325,17 @@ def process_image_slice(sam_predictor: SamPredictor,
         plt.pcolormesh(image_slice)
         plt.colorbar()
 
-        color = plt.colormaps['rainbow'](np.linspace(0, 1, len(lungs_contours)))
+        lungs_contours_len = len(lungs_contours)
+        color = plt.colormaps['rainbow'](np.linspace(0, 1, lungs_contours_len + 1))
         for lung_mask_index in np.arange(start=0, stop=len(lungs_contours)):
             lung_contour = lungs_contours[lung_mask_index]
             plt.plot(lung_contour[:, 0], lung_contour[:, 1], linewidth=2, color=color[lung_mask_index])
             lung_center_of_mass = lungs_centers_of_mass[lung_mask_index]
             plt.scatter(lung_center_of_mass[0], lung_center_of_mass[1], color=color[lung_mask_index])
+        # Plot the background point
+        if lungs_contours_len > 0:
+            lung_center_of_mass = lungs_centers_of_mass[-1]
+            plt.scatter(lung_center_of_mass[0], lung_center_of_mass[1], color=color[lungs_contours_len])
 
         file_path = output_base_file_path \
             .with_stem(file_stem) \
@@ -341,8 +348,8 @@ def process_image_slice(sam_predictor: SamPredictor,
             figure = plt.figure(figsize=(10, 10))
             plt.imshow(image_slice)
             show_mask(mask, plt.gca())
-            lungs_centers_of_mass_labels = np.zeros(len(lungs_centers_of_mass))
-            lungs_centers_of_mass_labels[0] = 1
+            lungs_centers_of_mass_labels = np.ones(len(lungs_centers_of_mass))
+            lungs_centers_of_mass_labels[-1] = 0
             show_points(
                 np.array(lungs_centers_of_mass),
                 np.array(lungs_centers_of_mass_labels),
@@ -500,9 +507,8 @@ def main():
                             masks_file_path=masks_file_path)
     else:
         items = image.shape[-1]
-        progress_bar = tqdm(desc='Processing image slices', total=items)
+        progress_bar = tqdm(desc='Processing CT image slices', total=items)
         for slice_number in range(items):
-            progress_bar.desc = f'Processing image slice {slice_number}'
             process_image_slice(sam_predictor=sam_predictor,
                                 image=image,
                                 masks=masks,

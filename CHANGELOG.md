@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+- Use all lungs as a positive prompt, and the slice center as a negative prompt.
 - **README.md** has been improved.
 - Load images, masks, image slice and masks slices in separate methods.
 - Load the model in a separate function.
