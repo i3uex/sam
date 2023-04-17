@@ -30,23 +30,6 @@ WindowWidth = 1500
 WindowLevel = -650
 
 
-def show_anns(anns):
-    if len(anns) == 0:
-        return
-    sorted_anns = sorted(anns, key=(lambda x: x['area']), reverse=True)
-    ax = plt.gca()
-    ax.set_autoscale_on(False)
-    polygons = []
-    color = []
-    for ann in sorted_anns:
-        m = ann['segmentation']
-        img = np.ones((m.shape[0], m.shape[1], 3))
-        color_mask = np.random.random((1, 3)).tolist()[0]
-        for i in range(3):
-            img[:, :, i] = color_mask[i]
-        ax.imshow(np.dstack((img, m * 0.35)))
-
-
 def show_mask(mask, ax, random_color=False):
     if random_color:
         color = np.concatenate([np.random.random(3), np.array([0.6])], axis=0)
@@ -260,15 +243,6 @@ def process_image_slice(sam_predictor: SamPredictor,
 
     # Hipótesis: coge el más pequeño con el score más alto
     # https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb
-
-    # mask_generator = SamAutomaticMaskGenerator(sam)
-    # masks = mask_generator.generate(ct_image)
-    #
-    # plt.figure(figsize=(20, 20))
-    # plt.imshow(ct_image)
-    # show_anns(masks)
-    # plt.axis('off')
-    # plt.show()
 
     if debug:
         # Create the base file name for the debug data
@@ -509,33 +483,6 @@ def main():
         f"Summary of operations performed:\n" \
         f"{summary}"
     print(notification_message)
-
-    # images_paths = sorted(DatasetPath.glob('COVID-19-CT-Seg_20cases/*.nii.gz'))
-    # images_masks_paths = sorted(DatasetPath.glob('Lung_Mask/*.nii.gz'))
-    #
-    # images_paths_len = len(images_paths)
-    # logger.info(f'Number of images: {len(images_paths)}')
-    #
-    # image_path = images_paths[0]
-    # image_mask_path = images_masks_paths[0]
-    #
-    # image_path_name = image_path.name
-    # logger.info(f'Processing image "{image_path_name}"')
-    #
-    # image = nib.load(image_path)
-    # image = image.get_fdata()
-    # logger.info(f'Image shape: "{image.shape}"')
-    #
-    # image_mask = nib.load(image_mask_path)
-    # image_mask = image_mask.get_fdata()
-    # logger.info(f'Image mask shape: "{image_mask.shape}"')
-    #
-    # image_slice_index = 122
-    #
-    # image_slice = image[:, :, image_slice_index]
-    # image_slice = windowing(image_slice)
-    # image_slice = to_greyscale(image_slice)
-    # image_slice_mask = image_mask[:, :, image_slice_index]
 
 
 if __name__ == '__main__':
