@@ -13,6 +13,7 @@ from rich import print
 from scipy.ndimage import center_of_mass
 from segment_anything import sam_model_registry, SamPredictor
 from skimage import measure
+from tqdm import tqdm
 
 from sam_model import SamModel
 from tools.argparse_helper import ArgumentParserHelper
@@ -227,27 +228,35 @@ def process_image_slice(sam_predictor: SamPredictor,
 
     lungs_contours = []
     lungs_centers_of_mass = []
+    masks = []
+    scores = []
     masks_slice_max = int(masks_slice.max())
-    for lung_mask_index in np.arange(start=1, stop=masks_slice_max + 1):
-        lung_mask = masks_slice == lung_mask_index
-        lung_mask_contour = measure.find_contours(lung_mask)[0]
-        lungs_contours.append(lung_mask_contour)
-        lung_center_of_mass = center_of_mass(lung_mask)
-        lungs_centers_of_mass.append(lung_center_of_mass)
-    lungs_centers_of_mass = np.array(lungs_centers_of_mass).astype(np.uint)
 
-    # Use the center of mass as prompt for the segmentation
-    # Include SAM contours in the debug information
+    if masks_slice_max > 0:
+        for lung_mask_index in np.arange(start=1, stop=masks_slice_max + 1):
+            lung_mask = masks_slice == lung_mask_index
+            lung_mask_contours = measure.find_contours(lung_mask)
+            if len(lung_mask_contours) > 0:
+                lung_mask_contour = lung_mask_contours[0]
+                lungs_contours.append(lung_mask_contour)
+                lung_center_of_mass = center_of_mass(lung_mask)
+                lungs_centers_of_mass.append(lung_center_of_mass)
+        lungs_centers_of_mass = np.array(lungs_centers_of_mass).astype(np.uint)
 
-    sam_predictor.set_image(image_slice)
+        # Use the center of mass as prompt for the segmentation
+        # Include SAM contours in the debug information
 
-    masks, scores, logits = sam_predictor.predict(
-        point_coords=np.array([
-            [lungs_centers_of_mass[0][0], lungs_centers_of_mass[0][1]],
-            [lungs_centers_of_mass[1][1], lungs_centers_of_mass[1][1]]
-        ]),
-        point_labels=np.array([1, 0]),
-        multimask_output=True)
+        sam_predictor.set_image(image_slice)
+
+        # TODO: Use first center of mass for foreground, the rest for background.
+        lungs_centers_of_mass_labels = np.zeros(len(lungs_centers_of_mass))
+        lungs_centers_of_mass_labels[0] = 1
+        masks, scores, logits = sam_predictor.predict(
+            point_coords=np.array(lungs_centers_of_mass),
+            point_labels=lungs_centers_of_mass_labels,
+            multimask_output=True)
+    else:
+        logger.info("There is no masks for the current slice")
 
     # Hipótesis: coge el más pequeño con el score más alto
     # https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb
@@ -317,12 +326,11 @@ def process_image_slice(sam_predictor: SamPredictor,
             figure = plt.figure(figsize=(10, 10))
             plt.imshow(image_slice)
             show_mask(mask, plt.gca())
+            lungs_centers_of_mass_labels = np.zeros(len(lungs_centers_of_mass))
+            lungs_centers_of_mass_labels[0] = 1
             show_points(
-                np.array([
-                    [lungs_centers_of_mass[0][0], lungs_centers_of_mass[0][1]],
-                    [lungs_centers_of_mass[1][0], lungs_centers_of_mass[1][1]]
-                ]),
-                np.array([1, 0]),
+                np.array(lungs_centers_of_mass),
+                np.array(lungs_centers_of_mass_labels),
                 plt.gca())
             plt.title(f"Mask {i + 1}, Score: {score:.3f}", fontsize=18)
             plt.axis('off')
@@ -357,7 +365,7 @@ def parse_arguments() -> Tuple[Path, Path, int, bool, bool]:
                                  required=True,
                                  help='path to masks file')
     argument_parser.add_argument('-s', '--slice',
-                                 required=True,
+                                 required=False,
                                  help='slice to work with')
     argument_parser.add_argument('-n', '--dry_run',
                                  action='store_true',
@@ -371,7 +379,10 @@ def parse_arguments() -> Tuple[Path, Path, int, bool, bool]:
         arguments.image_file_path)
     masks_file_path = ArgumentParserHelper.parse_file_path_segment(
         arguments.masks_file_path)
-    slice_number = ArgumentParserHelper.parse_integer(arguments.slice)
+    if arguments.slice is not None:
+        slice_number = ArgumentParserHelper.parse_integer(arguments.slice)
+    else:
+        slice_number = None
     debug = arguments.debug
     dry_run = arguments.dry_run
 
@@ -410,6 +421,10 @@ def get_summary(
     image_slices = image.shape[-1]
     masks = np.load(str(masks_file_path))
     masks_slices = masks.shape[-1]
+    if slice_number is not None:
+        requested_slice_in_range = slice_number < image_slices
+    else:
+        requested_slice_in_range = None
 
     summary = f'- Image file path: "{image_file_path}"\n' \
               f'- Masks file path: "{masks_file_path}"\n' \
@@ -419,7 +434,7 @@ def get_summary(
               f'- Image slices: {image_slices}\n' \
               f'- Masks slices: {masks_slices}\n' \
               f'- Equal number of slices: {image_slices == masks_slices}\n' \
-              f'- Requested slice in range: {slice_number < image_slices}'
+              f'- Requested slice in range: {requested_slice_in_range}'
 
     return summary
 
@@ -460,13 +475,28 @@ def main():
     image = load_image(image_file_path=image_file_path)
     masks = load_masks(masks_file_path=masks_file_path)
 
-    process_image_slice(sam_predictor=sam_predictor,
-                        image=image,
-                        masks=masks,
-                        slice_number=slice_number,
-                        debug=debug,
-                        image_file_path=image_file_path,
-                        masks_file_path=masks_file_path)
+    if slice_number is not None:
+        process_image_slice(sam_predictor=sam_predictor,
+                            image=image,
+                            masks=masks,
+                            slice_number=slice_number,
+                            debug=debug,
+                            image_file_path=image_file_path,
+                            masks_file_path=masks_file_path)
+    else:
+        items = image.shape[-1]
+        progress_bar = tqdm(desc='Processing image slices', total=items)
+        for slice_number in range(items):
+            progress_bar.desc = f'Processing image slice {slice_number}'
+            process_image_slice(sam_predictor=sam_predictor,
+                                image=image,
+                                masks=masks,
+                                slice_number=slice_number,
+                                debug=debug,
+                                image_file_path=image_file_path,
+                                masks_file_path=masks_file_path)
+            progress_bar.update()
+        progress_bar.close()
 
     end_timestamp = datetime.now()
     elapsed_seconds = (end_timestamp - start_timestamp).seconds
