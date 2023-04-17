@@ -30,6 +30,8 @@ WindowWidth = 1500
 WindowLevel = -650
 
 
+# TODO: add documentation to this method, taken from SAM's notebooks.
+# https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb
 def show_mask(mask, ax, random_color=False):
     if random_color:
         color = np.concatenate([np.random.random(3), np.array([0.6])], axis=0)
@@ -40,6 +42,8 @@ def show_mask(mask, ax, random_color=False):
     ax.imshow(mask_image)
 
 
+# TODO: add documentation to this method, taken from SAM's notebooks.
+# https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb
 def show_points(coords, labels, ax, marker_size=375):
     pos_points = coords[labels == 1]
     neg_points = coords[labels == 0]
@@ -49,16 +53,53 @@ def show_points(coords, labels, ax, marker_size=375):
                linewidth=1.25)
 
 
-# TODO: use this method only when needed
+# TODO: use this method only when needed, this is, only if the image is not
+#   greyscale already.
+# TODO: improve naming.
+# TODO: create a class for the images?
+# TODO: create a class for the slices?
 def to_greyscale(image: np.ndarray) -> np.ndarray:
+    """
+    Normalice slice values, so they are in the range 0 to 255, this is,
+    greyscale.
+
+    :param image: slice of the CT image to greyscale.
+
+    :return: slice of the CT image in greyscale.
+    :rtype: np.ndarray
+    """
+
+    logger.info('Apply windowing to CT image slice')
+    logger.debug(f'windowing('
+                 f'image={image.shape})')
+
     greyscale_image = (image - image.min()) / (image.max() - image.min()) * 255
     return greyscale_image
 
 
+# TODO: improve naming.
+# TODO: pass windowing parameters instead of using global values.
+# TODO: create a class for the images?
+# TODO: create a class for the slices?
 def windowing(image: np.ndarray) -> np.ndarray:
+    """
+    Use windowing to improve image contrast, focusing only in the range of
+    values of interest in the slice.
+
+    :param image: slice of the CT image to window.
+
+    :return: windowed slice of the CT image.
+    :rtype: np.ndarray
+    """
+
+    logger.info('Apply windowing to CT image slice')
+    logger.debug(f'windowing('
+                 f'image={image.shape})')
+
     windowed_image = image[:, :].clip(
         WindowLevel - WindowWidth // 2,
         WindowLevel + WindowWidth // 2)
+
     return windowed_image
 
 
@@ -241,7 +282,7 @@ def process_image_slice(sam_predictor: SamPredictor,
     else:
         logger.info("There is no masks for the current slice")
 
-    # Hipótesis: coge el más pequeño con el score más alto
+    # Hypothesis: get the smallest area with the highest score
     # https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb
 
     if debug:
