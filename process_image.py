@@ -218,7 +218,6 @@ def load_masks_slice(masks: np.array, slice_number: int) -> np.array:
     return masks_slice
 
 
-# TODO: pass a Debug object with file path properties, along with its status.
 def process_image_slice(sam_predictor: SamPredictor,
                         image: np.array,
                         masks: np.array,
@@ -269,7 +268,6 @@ def process_image_slice(sam_predictor: SamPredictor,
 
         sam_predictor.set_image(image_slice)
 
-        # TODO: Use first center of mass for foreground, the rest for background.
         lungs_centers_of_mass_labels = np.ones(len(lungs_centers_of_mass))
         lungs_centers_of_mass_labels[-1] = 0
         masks, scores, logits = sam_predictor.predict(
