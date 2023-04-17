@@ -17,6 +17,7 @@ from tqdm import tqdm
 
 from sam_model import SamModel
 from tools.argparse_helper import ArgumentParserHelper
+from tools.debug import Debug
 
 logger = logging.getLogger(__name__)
 
@@ -222,9 +223,7 @@ def process_image_slice(sam_predictor: SamPredictor,
                         image: np.array,
                         masks: np.array,
                         slice_number: int,
-                        debug: bool,
-                        image_file_path: Path,
-                        masks_file_path: Path):
+                        debug: Debug):
     """
     Process a slice of the image.
 
@@ -232,20 +231,16 @@ def process_image_slice(sam_predictor: SamPredictor,
     :param image: array with the slices of the CT.
     :param masks: masks for each slice of the CT.
     :param slice_number: slice to work with.
-    :param debug: if True, save debug data for later inspection.
-    :param image_file_path: path to the images file, for debugging tasks.
-    :param masks_file_path: path to the masks file, for debugging tasks.
+    :param debug: instance of Debug class.
     """
 
     logger.info('Process image slice')
     logger.debug(f'process_image_slice('
-                 f'sam_predictor="{sam_predictor}", '
+                 f'sam_predictor={sam_predictor.device.type}, '
                  f'image={image.shape}, '
-                 f'masks="{masks.shape}", '
+                 f'masks={masks.shape}, '
                  f'slice_number={slice_number}, '
-                 f'debug={debug}, '
-                 f'image_file_path="{image_file_path}", '
-                 f'masks_file_path="{masks_file_path}")')
+                 f'debug={debug.enabled})')
 
     image_slice = load_image_slice(image=image, slice_number=slice_number)
     masks_slice = load_masks_slice(masks=masks, slice_number=slice_number)
@@ -287,12 +282,8 @@ def process_image_slice(sam_predictor: SamPredictor,
     # Hypothesis: get the smallest area with the highest score
     # https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb
 
-    if debug:
-        # Create the base file name for the debug data
-        output_folder_path = DebugFolderPath / Path(image_file_path.stem)
-        output_folder_path.mkdir(parents=True, exist_ok=True)
-        output_base_file_name = f'slice_{slice_number}'
-        output_base_file_path = output_folder_path / Path(output_base_file_name)
+    if debug.enabled:
+        debug.set_slice_number(slice_number=slice_number)
 
         # Save SAM's prompt to YML
         prompts = dict()
@@ -305,17 +296,14 @@ def process_image_slice(sam_predictor: SamPredictor,
             })
 
         data = dict(
-            image=image_file_path.name,
-            masks=masks_file_path.name,
+            image=debug.image_file_path.name,
+            masks=debug.masks_file_path.name,
             slice=slice_number,
             prompts=prompts
         )
 
-        file_stem = f'{output_base_file_path.stem}_prompt'
-        file_path = output_base_file_path \
-            .with_stem(file_stem) \
-            .with_suffix('.yml')
-        with open(file_path, 'w') as file:
+        debug_file_path = debug.get_file_path('prompt', '.yml')
+        with open(debug_file_path, 'w') as file:
             yaml.dump(data, file, sort_keys=False)
 
         # Save a plot with SAM's prompt
@@ -337,10 +325,8 @@ def process_image_slice(sam_predictor: SamPredictor,
             lung_center_of_mass = lungs_centers_of_mass[-1]
             plt.scatter(lung_center_of_mass[0], lung_center_of_mass[1], color=color[lungs_contours_len])
 
-        file_path = output_base_file_path \
-            .with_stem(file_stem) \
-            .with_suffix('.png')
-        figure.savefig(file_path, bbox_inches='tight')
+        debug_file_path = debug.get_file_path('prompt', '.png')
+        figure.savefig(debug_file_path, bbox_inches='tight')
         plt.close()
 
         # Save SAM segmentation
@@ -357,11 +343,8 @@ def process_image_slice(sam_predictor: SamPredictor,
             plt.title(f"Mask {i + 1}, Score: {score:.3f}", fontsize=18)
             plt.axis('off')
 
-            file_stem = f'{output_base_file_path.stem}_prediction_{i}'
-            file_path = output_base_file_path \
-                .with_stem(file_stem) \
-                .with_suffix('.png')
-            figure.savefig(file_path, bbox_inches='tight')
+            debug_file_path = debug.get_file_path('prediction', '.png')
+            figure.savefig(debug_file_path, bbox_inches='tight')
             plt.close()
 
 
@@ -416,7 +399,7 @@ def get_summary(
         masks_file_path: Path,
         slice_number: int,
         dry_run: bool,
-        debug: bool
+        debug: Debug
 ) -> str:
     """
     Show a summary of the actions this script will perform.
@@ -424,7 +407,7 @@ def get_summary(
     :param image_file_path: path to the images file.
     :param masks_file_path: path to the masks file.
     :param slice_number: slice to work with.
-    :param debug: if True, save debug data for later inspection.
+    :param debug: instance of Debug class.
     :param dry_run: if True, the actions will not be performed.
 
     :return: summary of the actions this script will perform.
@@ -472,13 +455,20 @@ def main():
             level=logging.DEBUG,
             format="%(asctime)-15s %(levelname)8s %(name)s %(message)s")
         logging.getLogger("matplotlib.font_manager").disabled = True
+        logging.getLogger("matplotlib.colorbar").disabled = True
+        logging.getLogger("matplotlib.pyplot").disabled = True
 
     logger.info("Start processing data")
     logger.debug("main()")
 
     start_timestamp = datetime.now()
 
-    image_file_path, masks_file_path, slice_number, debug, dry_run = parse_arguments()
+    image_file_path, masks_file_path, slice_number, debug_enabled, dry_run = parse_arguments()
+
+    debug = Debug(
+        enabled=debug_enabled,
+        image_file_path=image_file_path,
+        masks_file_path=masks_file_path)
 
     summary = get_summary(
         image_file_path=image_file_path,
@@ -502,9 +492,7 @@ def main():
                             image=image,
                             masks=masks,
                             slice_number=slice_number,
-                            debug=debug,
-                            image_file_path=image_file_path,
-                            masks_file_path=masks_file_path)
+                            debug=debug)
     else:
         items = image.shape[-1]
         progress_bar = tqdm(desc='Processing CT image slices', total=items)
@@ -513,9 +501,7 @@ def main():
                                 image=image,
                                 masks=masks,
                                 slice_number=slice_number,
-                                debug=debug,
-                                image_file_path=image_file_path,
-                                masks_file_path=masks_file_path)
+                                debug=debug)
             progress_bar.update()
         progress_bar.close()
 
