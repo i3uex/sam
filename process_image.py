@@ -281,69 +281,70 @@ def process_image_slice(sam_predictor: SamPredictor,
     # https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb
 
     if debug.enabled:
-        debug.set_slice_number(slice_number=slice_number)
-
-        # Save SAM's prompt to YML
-        prompts = dict()
-        for index, lung_center_of_mass in enumerate(lungs_centers_of_mass):
-            prompts.update({
-                index: {
-                    'x': float(lung_center_of_mass[0]),
-                    'y': float(lung_center_of_mass[1])
-                }
-            })
-
-        data = dict(
-            image=debug.image_file_path.name,
-            masks=debug.masks_file_path.name,
-            slice=slice_number,
-            prompts=prompts
-        )
-
-        debug_file_path = debug.get_file_path('prompt', '.yml')
-        with open(debug_file_path, 'w') as file:
-            yaml.dump(data, file, sort_keys=False)
-
-        # Save a plot with SAM's prompt
-        figure = plt.figure()
-        plt.gca().invert_yaxis()
-        plt.style.use('grayscale')
-        plt.pcolormesh(image_slice)
-        plt.colorbar()
-
         lungs_contours_len = len(lungs_contours)
-        color = plt.colormaps['rainbow'](np.linspace(0, 1, lungs_contours_len + 1))
-        for lung_mask_index in np.arange(start=0, stop=len(lungs_contours)):
-            lung_contour = lungs_contours[lung_mask_index]
-            plt.plot(lung_contour[:, 0], lung_contour[:, 1], linewidth=2, color=color[lung_mask_index])
-            lung_center_of_mass = lungs_centers_of_mass[lung_mask_index]
-            plt.scatter(lung_center_of_mass[0], lung_center_of_mass[1], color=color[lung_mask_index])
-        # Plot the background point
         if lungs_contours_len > 0:
-            lung_center_of_mass = lungs_centers_of_mass[-1]
-            plt.scatter(lung_center_of_mass[0], lung_center_of_mass[1], color=color[lungs_contours_len])
+            debug.set_slice_number(slice_number=slice_number)
 
-        debug_file_path = debug.get_file_path('prompt', '.png')
-        figure.savefig(debug_file_path, bbox_inches='tight')
-        plt.close()
+            # Save SAM's prompt to YML
+            prompts = dict()
+            for index, lung_center_of_mass in enumerate(lungs_centers_of_mass):
+                prompts.update({
+                    index: {
+                        'x': float(lung_center_of_mass[0]),
+                        'y': float(lung_center_of_mass[1])
+                    }
+                })
 
-        # Save SAM segmentation
-        for i, (mask, score) in enumerate(zip(masks, scores)):
-            figure = plt.figure(figsize=(10, 10))
-            plt.imshow(image_slice)
-            show_mask(mask, plt.gca())
-            lungs_centers_of_mass_labels = np.ones(len(lungs_centers_of_mass))
-            lungs_centers_of_mass_labels[-1] = 0
-            show_points(
-                np.array(lungs_centers_of_mass),
-                np.array(lungs_centers_of_mass_labels),
-                plt.gca())
-            plt.title(f"Mask {i + 1}, Score: {score:.3f}", fontsize=18)
-            plt.axis('off')
+            data = dict(
+                image=debug.image_file_path.name,
+                masks=debug.masks_file_path.name,
+                slice=slice_number,
+                prompts=prompts
+            )
 
-            debug_file_path = debug.get_file_path('prediction', '.png')
+            debug_file_path = debug.get_file_path('prompt', '.yml')
+            with open(debug_file_path, 'w') as file:
+                yaml.dump(data, file, sort_keys=False)
+
+            # Save a plot with SAM's prompt
+            figure = plt.figure()
+            plt.gca().invert_yaxis()
+            plt.style.use('grayscale')
+            plt.pcolormesh(image_slice)
+            plt.colorbar()
+
+            color = plt.colormaps['rainbow'](np.linspace(0, 1, lungs_contours_len + 1))
+            for lung_mask_index in np.arange(start=0, stop=len(lungs_contours)):
+                lung_contour = lungs_contours[lung_mask_index]
+                plt.plot(lung_contour[:, 0], lung_contour[:, 1], linewidth=2, color=color[lung_mask_index])
+                lung_center_of_mass = lungs_centers_of_mass[lung_mask_index]
+                plt.scatter(lung_center_of_mass[0], lung_center_of_mass[1], color=color[lung_mask_index])
+            # Plot the background point
+            if lungs_contours_len > 0:
+                lung_center_of_mass = lungs_centers_of_mass[-1]
+                plt.scatter(lung_center_of_mass[0], lung_center_of_mass[1], color=color[lungs_contours_len])
+
+            debug_file_path = debug.get_file_path('prompt', '.png')
             figure.savefig(debug_file_path, bbox_inches='tight')
             plt.close()
+
+            # Save SAM segmentation
+            for i, (mask, score) in enumerate(zip(masks, scores)):
+                figure = plt.figure(figsize=(10, 10))
+                plt.imshow(image_slice)
+                show_mask(mask, plt.gca())
+                lungs_centers_of_mass_labels = np.ones(len(lungs_centers_of_mass))
+                lungs_centers_of_mass_labels[-1] = 0
+                show_points(
+                    np.array(lungs_centers_of_mass),
+                    np.array(lungs_centers_of_mass_labels),
+                    plt.gca())
+                plt.title(f"Mask {i + 1}, Score: {score:.3f}", fontsize=18)
+                plt.axis('off')
+
+                debug_file_path = debug.get_file_path('prediction', '.png')
+                figure.savefig(debug_file_path, bbox_inches='tight')
+                plt.close()
 
 
 def parse_arguments() -> Tuple[Path, Path, int, bool, bool]:
