@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Notebook explaining how to extract slices from images and masks files.
 - Helper class to show script execution summary.
 - Helper class to save debug data.
 - Ability to process all the slices in an image.
