@@ -1,10 +1,8 @@
 import argparse
 import logging
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Tuple
 
-import humanize
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -18,6 +16,7 @@ from tqdm import tqdm
 from sam_model import SamModel
 from tools.argparse_helper import ArgumentParserHelper
 from tools.debug import Debug
+from tools.summarizer import Summarizer
 
 logger = logging.getLogger(__name__)
 
@@ -460,7 +459,7 @@ def main():
     logger.info("Start processing data")
     logger.debug("main()")
 
-    start_timestamp = datetime.now()
+    summarizer = Summarizer()
 
     image_file_path, masks_file_path, slice_number, debug_enabled, dry_run = parse_arguments()
 
@@ -469,7 +468,7 @@ def main():
         image_file_path=image_file_path,
         masks_file_path=masks_file_path)
 
-    summary = get_summary(
+    summarizer.summary = get_summary(
         image_file_path=image_file_path,
         masks_file_path=masks_file_path,
         slice_number=slice_number,
@@ -478,8 +477,8 @@ def main():
 
     if dry_run:
         print()
-        print('[bold]Summary[/bold]')
-        print(summary)
+        print('[bold]Summary:[/bold]')
+        print(summarizer.summary)
         return
 
     sam_predictor = get_sam_predictor(SamModel.ViT_L)
@@ -504,17 +503,7 @@ def main():
             progress_bar.update()
         progress_bar.close()
 
-    end_timestamp = datetime.now()
-    elapsed_seconds = (end_timestamp - start_timestamp).seconds
-    start_time = start_timestamp.strftime("%H:%M:%S")
-    start_date = start_timestamp.strftime("%Y-%m-%d")
-    elapsed_time = humanize.naturaldelta(timedelta(seconds=elapsed_seconds))
-    notification_message = \
-        f"The task started at {start_time} on {start_date} has just finished.\n" \
-        f"It took {elapsed_time} to complete.\n" \
-        f"Summary of operations performed:\n" \
-        f"{summary}"
-    print(notification_message)
+    print(summarizer.notification_message)
 
 
 if __name__ == '__main__':

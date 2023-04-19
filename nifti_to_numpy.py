@@ -1,15 +1,14 @@
 import argparse
 import logging
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Tuple
 
-import humanize
 import nibabel as nib
 import numpy as np
 from rich import print
 
 from tools.argparse_helper import ArgumentParserHelper
+from tools.summarizer import Summarizer
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +81,8 @@ def get_summary(
 
     logger.info('Get summary')
     logger.debug(f'get_summary('
-                 f'input_file_path={input_file_path}, '
-                 f'output_file_path={output_file_path}, '
+                 f'input_file_path="{input_file_path}", '
+                 f'output_file_path="{output_file_path}", '
                  f'transpose={transpose}, '
                  f'rotate={rotate}, '
                  f'dry_run={dry_run})')
@@ -126,11 +125,14 @@ def nifty_to_numpy(
     logger.info(f'Image shape: {image.shape}')
 
     if transpose:
+        logger.info('Transpose the image')
         image = image.swapaxes(0, 1)
 
     if rotate:
+        logger.info('Rotate the image')
         image = np.rot90(image, k=2, axes=(0, 1))
 
+    logger.info('Save the NIfTI image as NumPy')
     np.save(str(output_file_path), image)
 
 
@@ -148,11 +150,11 @@ def main():
     logger.info('Start conversion process')
     logger.debug('main()')
 
-    start_timestamp = datetime.now()
+    summarizer = Summarizer()
 
     input_file_path, output_file_path, transpose, rotate, dry_run = parse_arguments()
 
-    summary = get_summary(
+    summarizer.summary = get_summary(
         input_file_path=input_file_path,
         output_file_path=output_file_path,
         transpose=transpose,
@@ -161,8 +163,8 @@ def main():
 
     if dry_run:
         print()
-        print('[bold]Summary[/bold]')
-        print(summary)
+        print('[bold]Summary:[/bold]')
+        print(summarizer.summary)
         return
 
     nifty_to_numpy(
@@ -171,17 +173,7 @@ def main():
         transpose=transpose,
         rotate=rotate)
 
-    end_timestamp = datetime.now()
-    elapsed_seconds = (end_timestamp - start_timestamp).seconds
-    start_time = start_timestamp.strftime("%H:%M:%S")
-    start_date = start_timestamp.strftime("%Y-%m-%d")
-    elapsed_time = humanize.naturaldelta(timedelta(seconds=elapsed_seconds))
-    notification_message = \
-        f"The task started at {start_time} on {start_date} has just finished.\n" \
-        f"It took {elapsed_time} to complete.\n" \
-        f"Summary of operations performed:\n" \
-        f"{summary}"
-    print(notification_message)
+    print(summarizer.notification_message)
 
 
 if __name__ == '__main__':
