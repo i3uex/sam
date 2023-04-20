@@ -100,7 +100,7 @@ The project includes various run/debug configurations. In order to create the wo
 ```shell
 conda run -n sam --no-capture-output python nifti_to_numpy.py --input_file_path datasets/zenodo/COVID-19-CT-Seg_20cases/coronacases_001.nii.gz --output_file_path working_data/image_coronacases_001.npy --transpose --rotate
 
-conda run -n sam --no-capture-output python nifti_to_numpy.py --input_file_path datasets/zenodo/Lung_Mask/coronacases_001.nii.gz --output_file_path working_data/masks_coronacases_001.npy --rotate
+conda run -n sam --no-capture-output python nifti_to_numpy.py --input_file_path datasets/zenodo/Lung_Mask/coronacases_001.nii.gz --output_file_path working_data/masks_coronacases_001.npy --transpose --rotate
 ```
 
 ## Image Processing
