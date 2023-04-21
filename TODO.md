@@ -1,5 +1,7 @@
 # To Do
 
+- Fix errors in **process_image.py**.
+  - I'm committing the changes just to have a backup.
 - Get a center of mass that is inside the lung mask. Is this the centroid?
   - Use more than a point to prompt each lung.
 - Maybe I should mark both lungs as foreground, and a point outside them as background?

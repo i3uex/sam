@@ -25,6 +25,7 @@ from tqdm import tqdm
 from sam_model import SamModel
 from tools.argparse_helper import ArgumentParserHelper
 from tools.debug import Debug
+from tools.mask import Mask
 from tools.summarizer import Summarizer
 
 logger = logging.getLogger(__name__)
@@ -254,54 +255,53 @@ def process_image_slice(sam_predictor: SamPredictor,
     image_slice = load_image_slice(image=image, slice_number=slice_number)
     masks_slice = load_masks_slice(masks=masks, slice_number=slice_number)
 
-    lungs_contours = []
     lungs_centers_of_mass = []
-    masks = []
-    scores = []
+    mask = []
+    score = []
     masks_slice_max = int(masks_slice.max())
+    lungs_masks_indexes = np.unique(masks_slice)
+    lungs_centers_of_mass_labels = []
 
-    if masks_slice_max > 0:
-        for lung_mask_index in np.arange(start=1, stop=masks_slice_max + 1):
-            lung_mask = masks_slice == lung_mask_index
-            lung_mask_contours = measure.find_contours(lung_mask)
-            if len(lung_mask_contours) > 0:
-                lung_mask_contour = lung_mask_contours[0]
-                lungs_contours.append(lung_mask_contour)
-                lung_center_of_mass = center_of_mass(lung_mask)
+    masks_indexes_len = len(lungs_masks_indexes)
+    if masks_indexes_len > 1:
+        for lung_mask_index in lungs_masks_indexes:
+            if lung_mask_index != 0:
+                mask_points = masks_slice == lung_mask_index
+                mask = Mask(mask_points)
+                lung_center_of_mass = mask.get_center()
                 lungs_centers_of_mass.append(lung_center_of_mass)
         # Add the slice center point, it will work as background
         lungs_centers_of_mass.append([255, 255])
         lungs_centers_of_mass = np.array(lungs_centers_of_mass).astype(np.uint)
 
         # Use the center of mass as prompt for the segmentation
-        # Include SAM contours in the debug information
 
         sam_predictor.set_image(image_slice)
 
-        lungs_centers_of_mass_labels = np.ones(len(lungs_centers_of_mass))
+        lungs_centers_of_mass_labels = np.ones(masks_indexes_len)
         lungs_centers_of_mass_labels[-1] = 0
-        masks, scores, logits = sam_predictor.predict(
+        mask, score, logits = sam_predictor.predict(
             point_coords=np.array(lungs_centers_of_mass),
             point_labels=lungs_centers_of_mass_labels,
             multimask_output=False)
     else:
         logger.info("There is no masks for the current slice")
 
-    # Hypothesis: get the smallest area with the highest score
-    # https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb
-
     if debug.enabled:
-        lungs_contours_len = len(lungs_contours)
-        if lungs_contours_len > 0:
+        if masks_indexes_len > 1:
             debug.set_slice_number(slice_number=slice_number)
 
             # Save SAM's prompt to YML
             prompts = dict()
             for index, lung_center_of_mass in enumerate(lungs_centers_of_mass):
+                x = int(lung_center_of_mass[0])
+                y = int(lung_center_of_mass[1])
+                label = int(lungs_centers_of_mass_labels[index])
                 prompts.update({
                     index: {
-                        'x': float(lung_center_of_mass[0]),
-                        'y': float(lung_center_of_mass[1])
+                        'x': x,
+                        'y': y,
+                        'label': label
                     }
                 })
 
@@ -316,45 +316,20 @@ def process_image_slice(sam_predictor: SamPredictor,
             with open(debug_file_path, 'w') as file:
                 yaml.dump(data, file, sort_keys=False)
 
-            # Save a plot with SAM's prompt
-            figure = plt.figure()
-            plt.gca().invert_yaxis()
-            plt.style.use('grayscale')
-            plt.pcolormesh(image_slice)
-            plt.colorbar()
+            # Save SAM segmentation
+            figure = plt.figure(figsize=(10, 10))
+            plt.imshow(np.fliplr(np.rot90(image_slice, k=3)))
+            plt.imshow(np.fliplr(np.rot90(masks_slice, k=3)), alpha=0.7)
+            show_points(
+                coords=lungs_centers_of_mass,
+                labels=lungs_centers_of_mass_labels,
+                ax=plt.gca())
+            plt.title(f"Score: {score[0]:.3f}", fontsize=18)
+            plt.axis('off')
 
-            color = plt.colormaps['rainbow'](np.linspace(0, 1, lungs_contours_len + 1))
-            for lung_mask_index in np.arange(start=0, stop=len(lungs_contours)):
-                lung_contour = lungs_contours[lung_mask_index]
-                plt.plot(lung_contour[:, 0], lung_contour[:, 1], linewidth=2, color=color[lung_mask_index])
-                lung_center_of_mass = lungs_centers_of_mass[lung_mask_index]
-                plt.scatter(lung_center_of_mass[0], lung_center_of_mass[1], color=color[lung_mask_index])
-            # Plot the background point
-            if lungs_contours_len > 0:
-                lung_center_of_mass = lungs_centers_of_mass[-1]
-                plt.scatter(lung_center_of_mass[0], lung_center_of_mass[1], color=color[lungs_contours_len])
-
-            debug_file_path = debug.get_file_path('prompt', '.png')
+            debug_file_path = debug.get_file_path('prediction', '.png')
             figure.savefig(debug_file_path, bbox_inches='tight')
             plt.close()
-
-            # Save SAM segmentation
-            for i, (mask, score) in enumerate(zip(masks, scores)):
-                figure = plt.figure(figsize=(10, 10))
-                plt.imshow(image_slice)
-                show_mask(mask, plt.gca())
-                lungs_centers_of_mass_labels = np.ones(len(lungs_centers_of_mass))
-                lungs_centers_of_mass_labels[-1] = 0
-                show_points(
-                    np.array(lungs_centers_of_mass),
-                    np.array(lungs_centers_of_mass_labels),
-                    plt.gca())
-                plt.title(f"Mask {i + 1}, Score: {score:.3f}", fontsize=18)
-                plt.axis('off')
-
-                debug_file_path = debug.get_file_path('prediction', '.png')
-                figure.savefig(debug_file_path, bbox_inches='tight')
-                plt.close()
 
 
 def process_image(sam_predictor: SamPredictor,
