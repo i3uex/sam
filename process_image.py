@@ -355,6 +355,38 @@ def process_image_slice(sam_predictor: SamPredictor,
                 plt.close()
 
 
+def process_image(sam_predictor: SamPredictor,
+                  image: np.array,
+                  masks: np.array,
+                  debug: Debug):
+    """
+    Process all the slices of a given image.
+
+    :param sam_predictor: SAM predictor for image segmentation.
+    :param image: array with the slices of the CT.
+    :param masks: masks for each slice of the CT.
+    :param debug: instance of Debug class.
+    """
+
+    logger.info('Process image')
+    logger.debug(f'process_image('
+                 f'sam_predictor={sam_predictor.device.type}, '
+                 f'image={image.shape}, '
+                 f'masks={masks.shape}, '
+                 f'debug={debug.enabled})')
+
+    items = image.shape[-1]
+    progress_bar = tqdm(desc='Processing CT image slices', total=items)
+    for slice_number in range(items):
+        process_image_slice(sam_predictor=sam_predictor,
+                            image=image,
+                            masks=masks,
+                            slice_number=slice_number,
+                            debug=debug)
+        progress_bar.update()
+    progress_bar.close()
+
+
 def parse_arguments() -> Tuple[Path, Path, int, bool, bool]:
     """
     Parse arguments passed via command line, returning them formatted. Adequate
@@ -494,23 +526,17 @@ def main():
     image = load_image(image_file_path=image_file_path)
     masks = load_masks(masks_file_path=masks_file_path)
 
-    if slice_number is not None:
+    if slice_number is None:
+        process_image(sam_predictor=sam_predictor,
+                      image=image,
+                      masks=masks,
+                      debug=debug)
+    else:
         process_image_slice(sam_predictor=sam_predictor,
                             image=image,
                             masks=masks,
                             slice_number=slice_number,
                             debug=debug)
-    else:
-        items = image.shape[-1]
-        progress_bar = tqdm(desc='Processing CT image slices', total=items)
-        for slice_number in range(items):
-            process_image_slice(sam_predictor=sam_predictor,
-                                image=image,
-                                masks=masks,
-                                slice_number=slice_number,
-                                debug=debug)
-            progress_bar.update()
-        progress_bar.close()
 
     print(summarizer.notification_message)
 
