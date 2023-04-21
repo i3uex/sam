@@ -11,3 +11,6 @@
   - Ideally, this should be done from the Python script, via a constant.
   - If `model = "default"`, the script should try to download the corresponding weights, if they were not already there.
 - Don't save debug prompt image if no masks are present.
+- Image orientation is defined in NIfTI files and [NiBabel is able to work with it][nibabel_orientation]. However, we are not using these features. Try to do it when showing the images.
+
+[nibabel_orientation]: https://nipy.org/nibabel/coordinate_systems.html "Coordinate systems and affines"
