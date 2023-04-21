@@ -150,6 +150,7 @@ def load_image(image_file_path: Path) -> np.array:
                  f'image_file_path="{image_file_path}")')
 
     image = np.load(str(image_file_path))
+
     return image
 
 
@@ -168,6 +169,7 @@ def load_masks(masks_file_path: Path) -> np.array:
                  f'masks_file_path="{masks_file_path}")')
 
     masks = np.load(str(masks_file_path))
+
     return masks
 
 
