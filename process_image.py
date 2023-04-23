@@ -17,9 +17,7 @@ import numpy as np
 import torch
 import yaml
 from rich import print
-from scipy.ndimage import center_of_mass
 from segment_anything import sam_model_registry, SamPredictor
-from skimage import measure
 from tqdm import tqdm
 
 from sam_model import SamModel
