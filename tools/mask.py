@@ -48,8 +48,10 @@ class Mask:
         center_of_mass_x, center_of_mass_y = center_of_mass(self.points)
         mask_center_of_mass = int(center_of_mass_x), int(center_of_mass_y)
         if self.__is_point_inside(mask_center_of_mass):
+            logger.info("Point is inside mask")
             x, y = self.__center_point(mask_center_of_mass)
         else:
+            logger.info("Point is outside mask")
             x, y = self.__move_point_inside(mask_center_of_mass)
 
         return np.array([x, y])
@@ -72,10 +74,7 @@ class Mask:
         assert 0 <= x < self.points.shape[0]
         assert 0 <= y < self.points.shape[1]
 
-        result = self.points[x - 1, y] and \
-                 self.points[x + 1, y] and \
-                 self.points[x, y - 1] and \
-                 self.points[x, y + 1]
+        result = self.points[x, y]
 
         return result
 
@@ -101,25 +100,33 @@ class Mask:
         assert 0 <= y < self.points.shape[1]
 
         # Check the point is inside the mask.
-        assert \
-            self.points[x - 1, y] and \
-            self.points[x + 1, y] and \
-            self.points[x, y - 1] and \
-            self.points[x, y + 1]
+        assert self.points[x, y]
 
-        # Get the mask's points in the X axis of the point.
-        mask_points_x = self.points[:, y]
-        # Get the mask's region points in X axis.
-        mask_segment_x = np.where(mask_points_x == True)[0]
-        # Get the center of the segment.
-        center_x = int(np.mean(mask_segment_x))
+        # Get the mask's points in the X axis of the point: the last False
+        # to the left, the first to the right. This is done to avoid multiple
+        # cuts to the mask, we are only interested in the region adjacent to
+        # the center.
+        mask_points_left = self.points[:x, y]
+        mask_points_left_start = np.where(mask_points_left == False)[0][-1]
+        mask_points_left = mask_points_left[mask_points_left_start + 1:]
 
-        # Get the mask's points in the Y axis of the point.
-        mask_points_y = self.points[x, :]
-        # Get the mask's region points in the Y axis.
-        mask_segment_y = np.where(mask_points_y == True)[0]
-        # Get the center of the segment.
-        center_y = int(np.mean(mask_segment_y))
+        mask_points_right = self.points[x + 1:, y]
+        mask_points_right_end = np.where(mask_points_right == False)[0][0]
+        mask_points_right = mask_points_right[:mask_points_right_end]
+
+        # Get the mask's points in the Y axis of the point: the last False
+        # above, the first below. This is done to avoid multiple cuts to the
+        # mask, we are only interested in the region adjacent to the center.
+        mask_points_above = self.points[x, :y]
+        mask_points_above_start = np.where(mask_points_above == False)[0][-1]
+        mask_points_above = mask_points_above[mask_points_above_start:]
+
+        mask_points_below = self.points[x, y + 1:]
+        mask_points_below_end = np.where(mask_points_below == False)[0][0]
+        mask_points_below = mask_points_below[:mask_points_below_end]
+
+        center_x = ((x - len(mask_points_left)) + (x + len(mask_points_right)) + 1) // 2
+        center_y = ((y - len(mask_points_above)) + (y + len(mask_points_below)) + 1) // 2
 
         return center_x, center_y
 
@@ -144,11 +151,7 @@ class Mask:
         assert 0 <= y < self.points.shape[1]
 
         # Check the point is outside the mask.
-        assert \
-            not self.points[x - 1, y] or \
-            not self.points[x + 1, y] or \
-            not self.points[x, y - 1] or \
-            not self.points[x, y + 1]
+        assert not self.points[x, y]
 
         # Get the mask points left, right, above and below the given point.
         mask_points_left = self.points[:x, y]
@@ -158,9 +161,9 @@ class Mask:
 
         # Get the segment of the mask in each list of points.
         mask_segment_left = np.where(mask_points_left == True)[0]
-        mask_segment_right = np.where(mask_points_right == True)[0]
+        mask_segment_right = np.where(mask_points_right == True)[0] + x + 1
         mask_segment_above = np.where(mask_points_above == True)[0]
-        mask_segment_below = np.where(mask_points_below == True)[0]
+        mask_segment_below = np.where(mask_points_below == True)[0] + y + 1
 
         # Put them in a list to get the max.
         mask_segments = [
@@ -191,7 +194,6 @@ class Mask:
             raise NotImplementedError
 
         # Center the new point inside the mask's region.
-        # new_point_centered = self.__center_point(new_point)
-        new_point_centered = new_point
+        new_point_centered = self.__center_point(new_point)
 
         return new_point_centered

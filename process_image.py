@@ -18,6 +18,7 @@ import torch
 import yaml
 from rich import print
 from segment_anything import sam_model_registry, SamPredictor
+from skimage import measure
 from tqdm import tqdm
 
 from sam_model import SamModel
@@ -274,7 +275,9 @@ def process_image_slice(sam_predictor: SamPredictor,
 
         # Use the center of mass as prompt for the segmentation
 
-        sam_predictor.set_image(image_slice)
+        # TODO: program a way to pass this rotation across the whole pipeline
+        # Transform the image so that SAM understands it
+        sam_predictor.set_image(np.fliplr(np.rot90(image_slice, k=3)))
 
         lungs_centers_of_mass_labels = np.ones(masks_indexes_len)
         lungs_centers_of_mass_labels[-1] = 0
@@ -314,10 +317,20 @@ def process_image_slice(sam_predictor: SamPredictor,
             with open(debug_file_path, 'w') as file:
                 yaml.dump(data, file, sort_keys=False)
 
+            # Get lungs masks contours
+            lungs_contours = []
+            for lung_mask_index in lungs_masks_indexes:
+                if lung_mask_index != 0:
+                    lung_mask = masks_slice == lung_mask_index
+                    lung_contour = measure.find_contours(lung_mask)
+                    lungs_contours.append(lung_contour[0])
+
             # Save SAM segmentation
             figure = plt.figure(figsize=(10, 10))
             plt.imshow(np.fliplr(np.rot90(image_slice, k=3)))
-            plt.imshow(np.fliplr(np.rot90(masks_slice, k=3)), alpha=0.7)
+            show_mask(mask, plt.gca())
+            for lung_contour in lungs_contours:
+                plt.plot(lung_contour[:, 0], lung_contour[:, 1], color='green')
             show_points(
                 coords=lungs_centers_of_mass,
                 labels=lungs_centers_of_mass_labels,
