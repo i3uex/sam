@@ -15,4 +15,10 @@
 - Don't save debug prompt image if no masks are present.
 - Image orientation is defined in NIfTI files and [NiBabel is able to work with it][nibabel_orientation]. However, we are not using these features. Try to do it when showing the images.
 
+## create_gif.py
+
+- Move hard-coded values to variables.
+- Configure through parameters.
+- Improve documentation.
+
 [nibabel_orientation]: https://nipy.org/nibabel/coordinate_systems.html "Coordinate systems and affines"
