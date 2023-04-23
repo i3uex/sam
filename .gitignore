@@ -120,5 +120,6 @@ datasets
 debug
 model_checkpoints
 working_data
-*.log
 __pycache__
+*.log
+*.pyc
