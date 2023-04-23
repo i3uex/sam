@@ -14,6 +14,7 @@ from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import torch
 import yaml
 from rich import print
@@ -26,6 +27,7 @@ from tools.argparse_helper import ArgumentParserHelper
 from tools.debug import Debug
 from tools.mask import Mask
 from tools.summarizer import Summarizer
+from tools.timestamp import Timestamp
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +39,14 @@ DebugFolderPath = Path('debug')
 # Windowing settings
 WindowWidth = 1500
 WindowLevel = -650
+
+# Result keys
+SliceNumberKey = 'slice'
+IoUKey = 'iou'
+MinKey = 'min'
+MaxKey = 'max'
+AverageKey = 'avg'
+StandardDeviationKey = 'std'
 
 
 # TODO: add documentation to this method, taken from SAM's notebooks.
@@ -228,11 +238,83 @@ def load_masks_slice(masks: np.array, slice_number: int) -> np.array:
     return masks_slice
 
 
+def compare_original_and_predicted_masks(
+        original_mask: np.array, predicted_mask: np.array
+):
+    """
+    Compares the original segmentation mask with the one predicted.
+
+    :param original_mask: original segmentation mask.
+    :param predicted_mask: predicted segmentation mask.
+    """
+
+    logger.info('Compare original and predicted masks')
+    logger.debug(f'compare_original_and_predicted_masks('
+                 f'original_mask={original_mask.shape}, '
+                 f'predicted_mask={predicted_mask.shape})')
+
+    # np.save('notebooks/data/original_mask_slice_122.npy', original_mask)
+    # np.save('notebooks/data/predicted_mask_slice_122.npy', predicted_mask)
+
+    original_mask_transformed = original_mask != 0
+
+    original_mask_transformed = np.fliplr(np.rot90(original_mask_transformed, k=3))
+    predicted_mask_transformed = predicted_mask.reshape(512, 512)
+
+    intersection = original_mask_transformed * predicted_mask_transformed
+    union = (predicted_mask_transformed + original_mask_transformed) > 0
+
+    iou = intersection.sum() / float(union.sum())
+
+    return iou
+
+
+def save_results(output_path: Path, list_of_dictionaries: list) -> Path:
+    """
+    Save the result to a CSV file.
+
+    :param output_path: where the results must be saved.
+    :param list_of_dictionaries: results to save.
+
+    :return: Path to the resulting CSV file.
+    :rtype: Path
+    """
+
+    logger.info('Save results')
+    logger.debug(f'save_result('
+                 f'output_path={output_path}, '
+                 f'list_of_dictionaries={list_of_dictionaries})')
+
+    timestamp = Timestamp.file()
+
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    # Save raw data
+    csv_output_path = output_path / Path(f'raw_data_{timestamp}.csv')
+    df = pd.DataFrame(list_of_dictionaries)
+    df.to_csv(csv_output_path, index=False)
+
+    # Save results
+    iou_column = df[IoUKey]
+    results = {
+        MinKey: iou_column.min(),
+        MaxKey: iou_column.max(),
+        AverageKey: iou_column.mean(),
+        StandardDeviationKey: iou_column.std()
+    }
+
+    csv_output_path = output_path / Path(f'results_{timestamp}.csv')
+    df = pd.DataFrame([results])
+    df.to_csv(csv_output_path, index=False)
+
+    return csv_output_path
+
+
 def process_image_slice(sam_predictor: SamPredictor,
                         image: np.array,
                         masks: np.array,
                         slice_number: int,
-                        debug: Debug):
+                        debug: Debug) -> dict:
     """
     Process a slice of the image.
 
@@ -260,6 +342,8 @@ def process_image_slice(sam_predictor: SamPredictor,
     lungs_masks_indexes = np.unique(masks_slice)
     lungs_centers_of_mass_labels = []
 
+    iou = None
+
     masks_indexes_len = len(lungs_masks_indexes)
     if masks_indexes_len > 1:
         for lung_mask_index in lungs_masks_indexes:
@@ -284,6 +368,10 @@ def process_image_slice(sam_predictor: SamPredictor,
             point_coords=np.array(lungs_centers_of_mass),
             point_labels=lungs_centers_of_mass_labels,
             multimask_output=False)
+
+        # Compare original and predicted lung masks
+        iou = compare_original_and_predicted_masks(
+            original_mask=masks_slice, predicted_mask=mask)
     else:
         logger.info("There is no masks for the current slice")
 
@@ -341,6 +429,13 @@ def process_image_slice(sam_predictor: SamPredictor,
             figure.savefig(debug_file_path, bbox_inches='tight')
             plt.close()
 
+    result = {
+        SliceNumberKey: slice_number,
+        IoUKey: iou
+    }
+
+    return result
+
 
 def process_image(sam_predictor: SamPredictor,
                   image: np.array,
@@ -364,14 +459,22 @@ def process_image(sam_predictor: SamPredictor,
 
     items = image.shape[-1]
     progress_bar = tqdm(desc='Processing CT image slices', total=items)
+
+    results = []
     for slice_number in range(items):
-        process_image_slice(sam_predictor=sam_predictor,
-                            image=image,
-                            masks=masks,
-                            slice_number=slice_number,
-                            debug=debug)
+        result = process_image_slice(sam_predictor=sam_predictor,
+                                     image=image,
+                                     masks=masks,
+                                     slice_number=slice_number,
+                                     debug=debug)
+        results.append(result)
         progress_bar.update()
     progress_bar.close()
+
+    output_path = debug.image_file_path.parent / Path('results') / Path(debug.image_file_path.stem)
+    csv_output_path = save_results(output_path, results)
+
+    return csv_output_path
 
 
 def parse_arguments() -> Tuple[Path, Path, int, bool, bool]:
@@ -460,7 +563,7 @@ def get_summary(
     summary = f'- Image file path: "{image_file_path}"\n' \
               f'- Masks file path: "{masks_file_path}"\n' \
               f'- Slice: {slice_number}\n' \
-              f'- Debug: {debug}\n' \
+              f'- Debug: {debug.enabled}\n' \
               f'- Dry run: {dry_run}\n' \
               f'- Image slices: {image_slices}\n' \
               f'- Masks slices: {masks_slices}\n' \
@@ -519,11 +622,12 @@ def main():
                       masks=masks,
                       debug=debug)
     else:
-        process_image_slice(sam_predictor=sam_predictor,
-                            image=image,
-                            masks=masks,
-                            slice_number=slice_number,
-                            debug=debug)
+        result = process_image_slice(sam_predictor=sam_predictor,
+                                     image=image,
+                                     masks=masks,
+                                     slice_number=slice_number,
+                                     debug=debug)
+        print(f'IoU: {result[IoUKey]}')
 
     print(summarizer.notification_message)
 

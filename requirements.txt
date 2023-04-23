@@ -4,6 +4,7 @@ imageio==2.27.0
 matplotlib==3.7.1
 nibabel==5.1.0
 numpy==1.24.3
+pandas==2.0.0
 pillow==9.5.0
 PyYAML==6.0
 rich==13.3.4

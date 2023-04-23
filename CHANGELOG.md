@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Results saving process, both raw data and statistical values.
 - Script to create GIF from folder with images.
 - Class to locate a centered point inside a mask.
 - Notebook explaining how to fix the center of mass when it is outside the mask's boundaries.
