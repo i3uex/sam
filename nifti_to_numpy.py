@@ -1,15 +1,18 @@
+"""
+Save NIfTI images as NumPy arrays.
+"""
+
 import argparse
 import logging
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Tuple
 
-import humanize
 import nibabel as nib
 import numpy as np
 from rich import print
 
 from tools.argparse_helper import ArgumentParserHelper
+from tools.summarizer import Summarizer
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +50,8 @@ def parse_arguments() -> Tuple[Path, Path, bool]:
         arguments.input_file_path)
     output_file_path_segment = arguments.output_file_path
     dry_run = arguments.dry_run
-    return Path(input_file_path_segment), Path(output_file_path_segment), dry_run
+    return Path(input_file_path_segment), Path(output_file_path_segment), \
+        dry_run
 
 
 def get_summary(
@@ -68,8 +72,8 @@ def get_summary(
 
     logger.info('Get summary')
     logger.debug(f'get_summary('
-                 f'input_file_path={input_file_path}, '
-                 f'output_file_path={output_file_path}, '
+                 f'input_file_path="{input_file_path}", '
+                 f'output_file_path="{output_file_path}", '
                  f'dry_run={dry_run})')
 
     summary = f'- Input file path: "{input_file_path}"\n' \
@@ -88,7 +92,6 @@ def nifty_to_numpy(
 
     :param input_file_path: path to the input NIfTI file to save as NumPy.
     :param output_file_path: path to the output NumPy file.
-
     """
 
     logger.info('Save NIfTI file as NumPy')
@@ -97,9 +100,11 @@ def nifty_to_numpy(
                  f'output_file_path="{output_file_path}")')
 
     image = nib.load(input_file_path)
+    logger.info(f'Voxel axes orientations: {nib.aff2axcodes(image.affine)}')
     image = image.get_fdata()
     logger.info(f'Image shape: {image.shape}')
 
+    logger.info('Save the NIfTI image as NumPy')
     np.save(str(output_file_path), image)
 
 
@@ -117,36 +122,26 @@ def main():
     logger.info('Start conversion process')
     logger.debug('main()')
 
-    start_timestamp = datetime.now()
+    summarizer = Summarizer()
 
     input_file_path, output_file_path, dry_run = parse_arguments()
 
-    summary = get_summary(
+    summarizer.summary = get_summary(
         input_file_path=input_file_path,
         output_file_path=output_file_path,
         dry_run=dry_run)
 
     if dry_run:
         print()
-        print('[bold]Summary[/bold]')
-        print(summary)
+        print('[bold]Summary:[/bold]')
+        print(summarizer.summary)
         return
 
     nifty_to_numpy(
         input_file_path=input_file_path,
         output_file_path=output_file_path)
 
-    end_timestamp = datetime.now()
-    elapsed_seconds = (end_timestamp - start_timestamp).seconds
-    start_time = start_timestamp.strftime("%H:%M:%S")
-    start_date = start_timestamp.strftime("%Y-%m-%d")
-    elapsed_time = humanize.naturaldelta(timedelta(seconds=elapsed_seconds))
-    notification_message = \
-        f"The task started at {start_time} on {start_date} has just finished.\n" \
-        f"It took {elapsed_time} to complete.\n" \
-        f"Summary of operations performed:\n" \
-        f"{summary}"
-    print(notification_message)
+    print(summarizer.notification_message)
 
 
 if __name__ == '__main__':
