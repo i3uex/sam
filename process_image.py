@@ -257,7 +257,6 @@ def process_image_slice(sam_predictor: SamPredictor,
     lungs_centers_of_mass = []
     mask = []
     score = []
-    masks_slice_max = int(masks_slice.max())
     lungs_masks_indexes = np.unique(masks_slice)
     lungs_centers_of_mass_labels = []
 
