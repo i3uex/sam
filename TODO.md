@@ -1,5 +1,6 @@
 # To Do
 
+- Fix crash with image 8 (**image_coronacases.npy**).
 - Use more than a point to prompt each lung.
 - If all the slices are to be processed, say so in the summary.
 - Download only the needed model weights, instead of all of them.
