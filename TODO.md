@@ -8,8 +8,6 @@
   - Ideally, this should be done from the Python script, via a constant.
   - If `model = "default"`, the script should try to download the corresponding weights, if they were not already there.
 - Image orientation is defined in NIfTI files and [NiBabel is able to work with it][nibabel_orientation]. However, we are not using these features. Try to do it when showing the images.
-- Parametrize **nifti_to_numpy.sh** script.
-- Parametrize **process_images.sh** script.
 
 ## create_gif.py
 
