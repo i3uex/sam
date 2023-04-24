@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Debug data is now saved in the same folder the image being processed is.
 
+### Fixed
+
+- Edge case when getting the center of a mask. If the seed (centroid) is outside the mask and the projections in X and Y axes do not cut the mask in any point, there is a crash. Solved using a random point inside the mask when this happens.
+
 ## [1.0.0] - 2023-04-23
 
 ### Added

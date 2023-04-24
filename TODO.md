@@ -1,6 +1,5 @@
 # To Do
 
-- Fix crash with image 8 (**image_coronacases.npy**), slice 26.
 - Update notebooks to better describe the reality of the project.
   - **image_transformations.ipynb** works, but **process_image.py** doesn't do that.
 - Use more than a point to prompt each lung.
