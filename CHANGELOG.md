@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Shell script to process multiple CT images.
 - Shell script to transform NIfTI data into NumPy data.
 - Results saving process, both raw data and statistical values.
 - Script to create GIF from folder with images.
