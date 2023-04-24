@@ -1,6 +1,8 @@
 # To Do
 
-- Fix crash with image 8 (**image_coronacases.npy**).
+- Fix crash with image 8 (**image_coronacases.npy**), slice 26.
+- Update notebooks to better describe the reality of the project.
+  - **image_transformations.ipynb** works, but **process_image.py** doesn't do that.
 - Use more than a point to prompt each lung.
 - If all the slices are to be processed, say so in the summary.
 - Download only the needed model weights, instead of all of them.
