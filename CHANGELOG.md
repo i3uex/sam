@@ -4,12 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2023-04-23
+## [Unreleased]
 
 ### Added
 
 - Shell script to process multiple CT images.
 - Shell script to transform NIfTI data into NumPy data.
+
+### Changed
+
+- Debug data is now saved in the same folder the image being processed is.
+
+## [1.0.0] - 2023-04-23
+
+### Added
+
 - Results saving process, both raw data and statistical values.
 - Script to create GIF from folder with images.
 - Class to locate a centered point inside a mask.
@@ -25,7 +34,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- Debug data is now saved in the same folder the image being processed is.
 - Use all lungs as a positive prompt, and the slice center as a negative prompt.
 - **README.md** has been improved.
 - Load images, masks, image slice and masks slices in separate methods.
