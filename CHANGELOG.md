@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+- Parametrize shell scripts.
+- Use same calling strategy for shell scripts.
 - Debug data is now saved in the same folder the image being processed is.
 
 ### Removed

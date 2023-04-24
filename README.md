@@ -71,7 +71,7 @@ Test [Segment Anything Model (SAM)][sam] performance when working with medical i
 7. Execute the shell script **scripts/download_checkpoints.sh** to get SAM's model checkpoints:
 
     ```shell
-    $ sh ./scripts/download_checkpoints.sh
+    $ scripts/download_checkpoints.sh
     ```
 
 8. Configure PyCharm. If you are working on Windows, make sure you use WSL and that your interpreter is also based on WSL.
@@ -88,7 +88,7 @@ Test [Segment Anything Model (SAM)][sam] performance when working with medical i
 Execute the script **scripts/download_dataset.sh** from the root folder of this project download the dataset:
 
 ```shell
-$ sh ./scripts/download_dataset.sh
+$ scripts/download_dataset.sh
 ```
 
 [dataset]: https://zenodo.org/record/3757476 "COVID-19 CT Lung and Infection Segmentation Dataset"
