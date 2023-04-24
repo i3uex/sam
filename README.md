@@ -103,6 +103,12 @@ $ conda run -n sam --no-capture-output python nifti_to_numpy.py --input_file_pat
 $ conda run -n sam --no-capture-output python nifti_to_numpy.py --input_file_path datasets/zenodo/Lung_Mask/coronacases_001.nii.gz --output_file_path working_data/masks_coronacases_001.npy
 ```
 
+You can also run the script **nifti_to_numpy.sh** from the root of this project to create the NumPy files from all the NIfTI ones:
+
+```shell
+$ scripts/nifti_to_numpy.sh
+```
+
 ## Image Processing
 
 You can process just a slide from a CT image:
