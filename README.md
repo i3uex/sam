@@ -68,7 +68,7 @@ Test [Segment Anything Model (SAM)][sam] performance when working with medical i
 
     > **Note:** I'm not totally sure these requirements are mandatory. They may be for the examples, but this project doesn't need OpenCV, for example.
 
-7. Execute the shell script **scripts/download_checkpoints.sh** to get SAM's model checkpoints:
+7. Execute the shell script **scripts/download_model_checkpoints.sh** to get SAM's model checkpoints:
 
     ```shell
     $ scripts/download_checkpoints.sh
