@@ -253,9 +253,6 @@ def compare_original_and_predicted_masks(
                  f'original_mask={original_mask.shape}, '
                  f'predicted_mask={predicted_mask.shape})')
 
-    # np.save('notebooks/data/original_mask_slice_122.npy', original_mask)
-    # np.save('notebooks/data/predicted_mask_slice_122.npy', predicted_mask)
-
     original_mask_transformed = original_mask != 0
 
     original_mask_transformed = np.fliplr(np.rot90(original_mask_transformed, k=3))
