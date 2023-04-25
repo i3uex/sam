@@ -1,5 +1,8 @@
 # To Do
 
+- Improve IoU:
+  - Use contours' bounding boxes as prompts, besides the center point.
+  - Use two more points as prompts. Divide the contour in three parts, find the center of each one of them.
 - Update notebooks to better describe the reality of the project.
   - **image_transformations.ipynb** works, but **process_image.py** doesn't do that.
 - Use more than a point to prompt each lung.
@@ -8,6 +11,7 @@
   - Ideally, this should be done from the Python script, via a constant.
   - If `model = "default"`, the script should try to download the corresponding weights, if they were not already there.
 - Image orientation is defined in NIfTI files and [NiBabel is able to work with it][nibabel_orientation]. However, we are not using these features. Try to do it when showing the images.
+- Parallelize **process_image.py**.
 
 ## create_gif.py
 
