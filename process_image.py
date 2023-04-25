@@ -256,7 +256,7 @@ def compare_original_and_predicted_masks(
     original_mask_transformed = original_mask != 0
 
     original_mask_transformed = np.fliplr(np.rot90(original_mask_transformed, k=3))
-    predicted_mask_transformed = predicted_mask.reshape(512, 512)
+    predicted_mask_transformed = np.squeeze(predicted_mask)
 
     intersection = original_mask_transformed * predicted_mask_transformed
     union = (predicted_mask_transformed + original_mask_transformed) > 0
@@ -353,7 +353,10 @@ def process_image_slice(sam_predictor: SamPredictor,
                 lung_center_of_mass = mask.get_center()
                 lungs_centers_of_mass.append(lung_center_of_mass)
         # Add the slice center point, it will work as background
-        lungs_centers_of_mass.append([255, 255])
+        lungs_centers_of_mass.append([
+            masks_slice.shape[0] // 2,
+            masks_slice.shape[1] // 2
+        ])
         lungs_centers_of_mass = np.array(lungs_centers_of_mass).astype(np.uint)
 
         # Use the center of mass as prompt for the segmentation
