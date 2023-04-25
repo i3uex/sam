@@ -266,15 +266,14 @@ def compare_original_and_predicted_masks(
     return iou
 
 
-def save_results(output_path: Path, list_of_dictionaries: list) -> Path:
+def save_results(output_path: Path, list_of_dictionaries: list) -> Tuple[Path, Path]:
     """
     Save the result to a CSV file.
 
     :param output_path: where the results must be saved.
     :param list_of_dictionaries: results to save.
 
-    :return: Path to the resulting CSV file.
-    :rtype: Path
+    :return: Paths to the resulting CSV files.
     """
 
     logger.info('Save results')
@@ -286,13 +285,10 @@ def save_results(output_path: Path, list_of_dictionaries: list) -> Path:
 
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # Save raw data
-    csv_output_path = output_path / Path(f'raw_data_{timestamp}.csv')
-    df = pd.DataFrame(list_of_dictionaries)
-    df.to_csv(csv_output_path, index=False)
+    df_raw_data = pd.DataFrame(list_of_dictionaries)
 
     # Save results
-    iou_column = df[IoUKey]
+    iou_column = df_raw_data[IoUKey]
     results = {
         MinKey: iou_column.min(),
         MaxKey: iou_column.max(),
@@ -300,11 +296,15 @@ def save_results(output_path: Path, list_of_dictionaries: list) -> Path:
         StandardDeviationKey: iou_column.std()
     }
 
-    csv_output_path = output_path / Path(f'results_{timestamp}.csv')
-    df = pd.DataFrame([results])
-    df.to_csv(csv_output_path, index=False)
+    results_csv_output_path = output_path / Path(f'results_{timestamp}.csv')
+    df_results = pd.DataFrame([results])
+    df_results.to_csv(results_csv_output_path, index=False)
 
-    return csv_output_path
+    # Save raw data
+    raw_data_csv_output_path = output_path / Path(f'raw_data_{timestamp}.csv')
+    df_raw_data.to_csv(raw_data_csv_output_path, index=False)
+
+    return results_csv_output_path, raw_data_csv_output_path
 
 
 def process_image_slice(sam_predictor: SamPredictor,
@@ -313,13 +313,16 @@ def process_image_slice(sam_predictor: SamPredictor,
                         slice_number: int,
                         debug: Debug) -> dict:
     """
-    Process a slice of the image.
+    Process a slice of the image. Returns the result of the analysis.
 
     :param sam_predictor: SAM predictor for image segmentation.
     :param image: array with the slices of the CT.
     :param masks: masks for each slice of the CT.
     :param slice_number: slice to work with.
     :param debug: instance of Debug class.
+
+    :return: a dictionary with the number of the slice been processed and the
+    IoU between the ground truth and the prediction masks.
     """
 
     logger.info('Process image slice')
@@ -437,14 +440,18 @@ def process_image_slice(sam_predictor: SamPredictor,
 def process_image(sam_predictor: SamPredictor,
                   image: np.array,
                   masks: np.array,
-                  debug: Debug):
+                  debug: Debug) -> Tuple[Path, Path]:
     """
-    Process all the slices of a given image.
+    Process all the slices of a given image. Saves the result as two CSV files,
+    one with each slice's result, another with a statistical summary. Returns
+    the paths where the resulting CSV files will be stored.
 
     :param sam_predictor: SAM predictor for image segmentation.
     :param image: array with the slices of the CT.
     :param masks: masks for each slice of the CT.
     :param debug: instance of Debug class.
+
+    :return: paths where the resulting CSV files are stored.
     """
 
     logger.info('Process image')
@@ -469,9 +476,9 @@ def process_image(sam_predictor: SamPredictor,
     progress_bar.close()
 
     output_path = debug.image_file_path.parent / Path('results') / Path(debug.image_file_path.stem)
-    csv_output_path = save_results(output_path, results)
+    results_path, raw_data_path = save_results(output_path, results)
 
-    return csv_output_path
+    return results_path, raw_data_path
 
 
 def parse_arguments() -> Tuple[Path, Path, int, bool, bool]:
@@ -614,10 +621,12 @@ def main():
     masks = load_masks(masks_file_path=masks_file_path)
 
     if slice_number is None:
-        process_image(sam_predictor=sam_predictor,
-                      image=image,
-                      masks=masks,
-                      debug=debug)
+        result = process_image(sam_predictor=sam_predictor,
+                               image=image,
+                               masks=masks,
+                               debug=debug)
+        print(f'Results saved to: "{str(result[0])}"')
+        print(f'Raw data saved to: "{str(result[1])}"')
     else:
         result = process_image_slice(sam_predictor=sam_predictor,
                                      image=image,
