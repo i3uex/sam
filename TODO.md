@@ -3,6 +3,7 @@
 - Include Dice, besides IoU.
 - Improve segmentation:
   - Use contours' bounding boxes as prompts, besides the center point.
+    - Explained in section "Combining points and boxes" of the notebook ["Object masks from prompts with SAM"][sam_notebook].
   - Use two more points as prompts. Divide the contour in three parts, find the center of each one of them.
 - Update notebooks to better describe the reality of the project.
   - **image_transformations.ipynb** works, but **process_image.py** doesn't do that.
@@ -20,4 +21,5 @@
 - Configure through parameters.
 - Improve documentation.
 
+[sam_notebook]: https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb "Object masks from prompts with SAM"
 [nibabel_orientation]: https://nipy.org/nibabel/coordinate_systems.html "Coordinate systems and affines"
