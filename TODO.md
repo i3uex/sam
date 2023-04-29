@@ -1,6 +1,7 @@
 # To Do
 
-- Improve IoU:
+- Include Dice, besides IoU.
+- Improve segmentation:
   - Use contours' bounding boxes as prompts, besides the center point.
   - Use two more points as prompts. Divide the contour in three parts, find the center of each one of them.
 - Update notebooks to better describe the reality of the project.
