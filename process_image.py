@@ -412,9 +412,9 @@ def process_image_slice(sam_predictor: SamPredictor,
             for lung_mask_index in lungs_masks_indexes:
                 if lung_mask_index != 0:
                     lung_mask = masks_slice == lung_mask_index
-                    lung_contour = measure.find_contours(lung_mask)
-                    # TODO: draw all contours, not the first only
-                    lungs_contours.append(lung_contour[0])
+                    lung_contours = measure.find_contours(lung_mask)
+                    for lung_contour in lung_contours:
+                        lungs_contours.append(lung_contour)
 
             # Save SAM segmentation
             figure = plt.figure(figsize=(10, 10))
