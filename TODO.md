@@ -1,6 +1,5 @@
 # To Do
 
-- Include Dice, besides IoU.
 - Improve segmentation:
   - Use contours' bounding boxes as prompts, besides the center point.
     - Explained in section "Combining points and boxes" of the notebook ["Object masks from prompts with SAM"][sam_notebook].

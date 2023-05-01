@@ -42,7 +42,9 @@ WindowLevel = -650
 
 # Result keys
 SliceNumberKey = 'slice'
+MetricKey = 'metric'
 IoUKey = 'iou'
+DiceKey = 'dice'
 MinKey = 'min'
 MaxKey = 'max'
 AverageKey = 'avg'
@@ -240,12 +242,16 @@ def load_masks_slice(masks: np.array, slice_number: int) -> np.array:
 
 def compare_original_and_predicted_masks(
         original_mask: np.array, predicted_mask: np.array
-):
+) -> Tuple[float, float]:
     """
-    Compares the original segmentation mask with the one predicted.
+    Compares the original segmentation mask with the one predicted. Returns a
+    tuple with the Jaccard index (IoU) and the Dice coefficient.
 
     :param original_mask: original segmentation mask.
     :param predicted_mask: predicted segmentation mask.
+
+    :return: Jaccard index (IoU) and the Dice coefficient of the masks
+    provided.
     """
 
     logger.info('Compare original and predicted masks')
@@ -259,11 +265,12 @@ def compare_original_and_predicted_masks(
     predicted_mask_transformed = np.squeeze(predicted_mask)
 
     intersection = original_mask_transformed * predicted_mask_transformed
-    union = (predicted_mask_transformed + original_mask_transformed) > 0
+    union = (original_mask_transformed + predicted_mask_transformed) > 0
 
     iou = intersection.sum() / float(union.sum())
+    dice = intersection.sum() * 2 / (original_mask.sum() + predicted_mask.sum())
 
-    return iou
+    return iou, dice
 
 
 def save_results(output_path: Path, list_of_dictionaries: list) -> Tuple[Path, Path]:
@@ -289,15 +296,26 @@ def save_results(output_path: Path, list_of_dictionaries: list) -> Tuple[Path, P
 
     # Save results
     iou_column = df_raw_data[IoUKey]
-    results = {
+    iou_results = {
+        MetricKey: IoUKey,
         MinKey: iou_column.min(),
         MaxKey: iou_column.max(),
         AverageKey: iou_column.mean(),
         StandardDeviationKey: iou_column.std()
     }
+    dice_column = df_raw_data[DiceKey]
+    dice_results = {
+        MetricKey: DiceKey,
+        MinKey: dice_column.min(),
+        MaxKey: dice_column.max(),
+        AverageKey: dice_column.mean(),
+        StandardDeviationKey: dice_column.std()
+    }
+
+    results = [iou_results, dice_results]
 
     results_csv_output_path = output_path / Path(f'results_{timestamp}.csv')
-    df_results = pd.DataFrame([results])
+    df_results = pd.DataFrame(results)
     df_results.to_csv(results_csv_output_path, index=False)
 
     # Save raw data
@@ -343,6 +361,7 @@ def process_image_slice(sam_predictor: SamPredictor,
     lungs_centers_of_mass_labels = []
 
     iou = None
+    dice = None
 
     masks_indexes_len = len(lungs_masks_indexes)
     if masks_indexes_len > 1:
@@ -373,7 +392,7 @@ def process_image_slice(sam_predictor: SamPredictor,
             multimask_output=False)
 
         # Compare original and predicted lung masks
-        iou = compare_original_and_predicted_masks(
+        iou, dice = compare_original_and_predicted_masks(
             original_mask=masks_slice, predicted_mask=mask)
     else:
         logger.info("There is no masks for the current slice")
@@ -435,7 +454,8 @@ def process_image_slice(sam_predictor: SamPredictor,
 
     result = {
         SliceNumberKey: slice_number,
-        IoUKey: iou
+        IoUKey: iou,
+        DiceKey: dice
     }
 
     return result
@@ -637,7 +657,8 @@ def main():
                                      masks=masks,
                                      slice_number=slice_number,
                                      debug=debug)
-        print(f'IoU: {result[IoUKey]}')
+        print(f'IoU: {result[IoUKey]:.3f}')
+        print(f'Dice: {result[DiceKey]:.3f}')
 
     print(summarizer.notification_message)
 
