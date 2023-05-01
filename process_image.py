@@ -22,6 +22,7 @@ from segment_anything import sam_model_registry, SamPredictor
 from skimage import measure
 from tqdm import tqdm
 
+from csv_keys import *
 from sam_model import SamModel
 from tools.argparse_helper import ArgumentParserHelper
 from tools.debug import Debug
@@ -39,16 +40,6 @@ DebugFolderPath = Path('debug')
 # Windowing settings
 WindowWidth = 1500
 WindowLevel = -650
-
-# Result keys
-SliceNumberKey = 'slice'
-MetricKey = 'metric'
-IoUKey = 'iou'
-DiceKey = 'dice'
-MinKey = 'min'
-MaxKey = 'max'
-AverageKey = 'avg'
-StandardDeviationKey = 'std'
 
 
 # TODO: add documentation to this method, taken from SAM's notebooks.

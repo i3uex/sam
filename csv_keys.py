@@ -1,0 +1,10 @@
+SliceNumberKey = 'slice'
+MetricKey = 'metric'
+IoUKey = 'iou'
+DiceKey = 'dice'
+MetricKeys = [IoUKey, DiceKey]
+MinKey = 'min'
+MaxKey = 'max'
+AverageKey = 'avg'
+StandardDeviationKey = 'std'
+ImageKey = 'image'

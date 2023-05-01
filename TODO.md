@@ -1,6 +1,5 @@
 # To Do
 
-- Combine results in a single file.
 - Add center for each contour in the mask, instead of center for each mask.
   - This will improve the segmentation process, as SAM will have more information available.
   - This should be done in the class **Mask**.

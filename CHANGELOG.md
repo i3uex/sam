@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Summary generation process when multiple images are processed.
 - Notebook describing prompting process.
 - Dice coefficient in the results.
 - Notebook describing the windowing process.

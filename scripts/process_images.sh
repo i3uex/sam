@@ -1,8 +1,10 @@
 #!/usr/bin/bash
 
 PYTHON="conda run -n sam --no-capture-output python"
-SCRIPT="process_image.py"
+PROCESS_IMAGE_SCRIPT="process_image.py"
+JOIN_RESULTS_SCRIPT="join_results.py"
 WORKING_DATA_PATH="working_data"
+RESULTS_PATH=$WORKING_DATA_PATH/"results"
 
 IMAGE_NAMES=(
   "coronacases_001"
@@ -18,8 +20,9 @@ IMAGE_NAMES=(
 )
 
 for IMAGE_NAME in "${IMAGE_NAMES[@]}"; do
-  $PYTHON $SCRIPT \
+  $PYTHON $PROCESS_IMAGE_SCRIPT \
     --image_file_path $WORKING_DATA_PATH/image_"$IMAGE_NAME".npy \
-    --masks_file_path $WORKING_DATA_PATH/masks_"$IMAGE_NAME".npy \
-    --debug
+    --masks_file_path $WORKING_DATA_PATH/masks_"$IMAGE_NAME".npy
 done
+
+$PYTHON $JOIN_RESULTS_SCRIPT --results_folder_path $RESULTS_PATH

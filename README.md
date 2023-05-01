@@ -122,3 +122,5 @@ You can also process the whole CT image:
 ```shell
 $ conda run -n sam --no-capture-output python process_image.py --image_file_path working_data/image_coronacases_001.npy --masks_file_path working_data/masks_coronacases_001.npy --debug 
 ```
+
+You can even process a list of images using the script **process_images.sh**. Use the list inside it to select the images to process. When it finishes, the results will be stored inside the folder **results** in the **working_data** folder, in a series of folders named after each image processed. A summary of the results will be stored in the folder **results**.
