@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Notebook describing the windowing process.
 - Shell script to process multiple CT images.
 - Shell script to transform NIfTI data into NumPy data.
 
