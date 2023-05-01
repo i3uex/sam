@@ -1,5 +1,11 @@
 # To Do
 
+- Add center for each contour in the mask, instead of center for each mask.
+  - This will improve the segmentation process, as SAM will have more information available.
+  - This should be done in the class **Mask**.
+- Return bounding boxes from the class **Mask**.
+  - Use **sam_prompts.ipynb** to see how to calculate the bounding boxes.
+  - But change it before, so a bounding box for each contour is returned.
 - Improve segmentation:
   - Use contours' bounding boxes as prompts, besides the center point.
     - Explained in section "Combining points and boxes" of the notebook ["Object masks from prompts with SAM"][sam_notebook].
