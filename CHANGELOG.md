@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Class to manage multiple masks.
 - Summary generation process when multiple images are processed.
 - Notebook describing prompting process.
 - Dice coefficient in the results.
