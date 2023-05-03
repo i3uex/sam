@@ -19,14 +19,13 @@ import torch
 import yaml
 from rich import print
 from segment_anything import sam_model_registry, SamPredictor
-from skimage import measure
 from tqdm import tqdm
 
 from csv_keys import *
 from sam_model import SamModel
 from tools.argparse_helper import ArgumentParserHelper
 from tools.debug import Debug
-from tools.mask import Mask
+from tools.slice_masks import SliceMasks
 from tools.summarizer import Summarizer
 from tools.timestamp import Timestamp
 
@@ -345,59 +344,37 @@ def process_image_slice(sam_predictor: SamPredictor,
     image_slice = load_image_slice(image=image, slice_number=slice_number)
     masks_slice = load_masks_slice(masks=masks, slice_number=slice_number)
 
-    lungs_centers_of_mass = []
+    slice_masks = SliceMasks(labeled_image=masks_slice)
+
     mask = []
     score = []
-    lungs_masks_indexes = np.unique(masks_slice)
-    lungs_centers_of_mass_labels = []
-
     iou = None
     dice = None
 
-    masks_indexes_len = len(lungs_masks_indexes)
-    if masks_indexes_len > 1:
-        for lung_mask_index in lungs_masks_indexes:
-            if lung_mask_index != 0:
-                mask_points = masks_slice == lung_mask_index
-                mask = Mask(mask_points)
-                lung_center_of_mass = mask.get_center()
-                lungs_centers_of_mass.append(lung_center_of_mass)
-        # Add the slice center point, it will work as background
-        lungs_centers_of_mass.append([
-            masks_slice.shape[0] // 2,
-            masks_slice.shape[1] // 2
-        ])
-        lungs_centers_of_mass = np.array(lungs_centers_of_mass).astype(np.uint)
-
-        # Use the center of mass as prompt for the segmentation
-
-        # TODO: program a way to pass this rotation across the whole pipeline
-        # Transform the image so that SAM understands it
-        sam_predictor.set_image(np.fliplr(np.rot90(image_slice, k=3)))
-
-        lungs_centers_of_mass_labels = np.ones(masks_indexes_len)
-        lungs_centers_of_mass_labels[-1] = 0
+    if slice_masks.contours is not None:
+        sam_predictor.set_image(image_slice)
         mask, score, logits = sam_predictor.predict(
-            point_coords=np.array(lungs_centers_of_mass),
-            point_labels=lungs_centers_of_mass_labels,
+            point_coords=slice_masks.contours_centers,
+            point_labels=slice_masks.contours_centers_labels,
+            box=slice_masks.contours_bounding_boxes[0],
             multimask_output=False)
 
         # Compare original and predicted lung masks
         iou, dice = compare_original_and_predicted_masks(
             original_mask=masks_slice, predicted_mask=mask)
     else:
-        logger.info("There is no masks for the current slice")
+        logger.info("There are no masks for the current slice")
 
     if debug.enabled:
-        if masks_indexes_len > 1:
+        if slice_masks.contours is not None:
             debug.set_slice_number(slice_number=slice_number)
 
             # Save SAM's prompt to YML
             prompts = dict()
-            for index, lung_center_of_mass in enumerate(lungs_centers_of_mass):
-                x = int(lung_center_of_mass[0])
-                y = int(lung_center_of_mass[1])
-                label = int(lungs_centers_of_mass_labels[index])
+            for index, contour_center in enumerate(slice_masks.contours_centers):
+                x = int(contour_center[0])
+                y = int(contour_center[1])
+                label = int(slice_masks.contours_centers_labels[index])
                 prompts.update({
                     index: {
                         'x': x,
@@ -417,25 +394,29 @@ def process_image_slice(sam_predictor: SamPredictor,
             with open(debug_file_path, 'w') as file:
                 yaml.dump(data, file, sort_keys=False)
 
-            # Get lungs masks contours
-            lungs_contours = []
-            for lung_mask_index in lungs_masks_indexes:
-                if lung_mask_index != 0:
-                    lung_mask = masks_slice == lung_mask_index
-                    lung_contours = measure.find_contours(lung_mask)
-                    for lung_contour in lung_contours:
-                        lungs_contours.append(lung_contour)
-
             # Save SAM segmentation
             figure = plt.figure(figsize=(10, 10))
-            plt.imshow(np.fliplr(np.rot90(image_slice, k=3)))
+            plt.imshow(image_slice)
             show_mask(mask, plt.gca())
-            for lung_contour in lungs_contours:
-                plt.plot(lung_contour[:, 0], lung_contour[:, 1], color='green')
+            for mask_contour in slice_masks.contours:
+                plt.plot(mask_contour[:, 0], mask_contour[:, 1], color='green')
             show_points(
-                coords=lungs_centers_of_mass,
-                labels=lungs_centers_of_mass_labels,
+                coords=slice_masks.contours_centers,
+                labels=slice_masks.contours_centers_labels,
                 ax=plt.gca())
+            for contours_bounding_box in slice_masks.contours_bounding_boxes:
+                xs = [contours_bounding_box[0],
+                      contours_bounding_box[1],
+                      contours_bounding_box[1],
+                      contours_bounding_box[0],
+                      contours_bounding_box[0]]
+                ys = [contours_bounding_box[3],
+                      contours_bounding_box[3],
+                      contours_bounding_box[2],
+                      contours_bounding_box[2],
+                      contours_bounding_box[3]]
+                plt.plot(xs, ys, color='blue', linewidth=1.25)
+                break
             plt.title(f"Score: {score[0]:.3f}", fontsize=18)
             plt.axis('off')
 
