@@ -12,7 +12,7 @@ from tools.point_location import PointLocation
 logger = logging.getLogger(__name__)
 
 
-class Masks:
+class SliceMasks:
     """
     Process a NumPy array containing a series of masks over a CT slice.
 
@@ -31,31 +31,33 @@ class Masks:
     Third, the bounding boxes for each contour.
     """
 
-    __points: np.array = None
-    __mask_indexes: np.array = None
+    labeled_image: np.array = None
+    labels: np.array = None
 
     contours: list = None  # coordinates of the polygon surrounding an object
-    contours_masks: list = None  # filled contours
-    contours_bounding_boxes: list = None  # top left, bottom right coordinates
-    contours_centers: list = None  # point inside each contour
+    contours_labels: list = None  # original label for the contour
+    contours_masks: list = None  # masks for the contours
+    contours_centers: np.array = None  # point inside each contour
+    contours_centers_labels: np.array = None  # labels of the points inside each contour
+    contours_bounding_boxes: np.array = None  # top left, bottom right coordinates
 
-    def __init__(self, points: np.array):
+    def __init__(self, labeled_image: np.array):
         """
         Init Masks class instance with an array of values. The value 0 means no
         object was present in that location. Every value greater than 0 marks a
         different object.
 
-        :param points: array with the values of the masks.
+        :param labeled_image: array with the values of the masks.
         """
 
         logger.info('Init Masks')
         logger.debug(f'Masks.__init__('
-                     f'points={points.shape})')
+                     f'regions={labeled_image.shape})')
 
-        self.__points = points
-        self.__process_points()
+        self.labeled_image = labeled_image
+        self.process_points()
 
-    def __process_points(self):
+    def process_points(self):
         """
         If the points provided to the class contains other values than 0, find
         the contours. For each contour found, find their masks, their centers
@@ -65,34 +67,39 @@ class Masks:
         logger.info('Process points')
         logger.debug('__process_points()')
 
-        self.__masks_indexes = np.unique(self.__points)
-        if len(self.__masks_indexes) > 1:
-            self.__find_contours()
-            self.__find_contours_masks()
-            self.__find_contours_centers()
-            self.__find_contours_bounding_boxes()
+        self.labels = np.unique(self.labeled_image)
+        if len(self.labels) > 1:
+            self.find_contours()
+            self.find_contours_masks()
+            self.find_contours_centers()
+            self.find_contours_bounding_boxes()
 
-    def __find_contours(self):
+    def find_contours(self):
         """
         Find contours for every point value other than 0.
         """
 
         logger.info('Find contours')
-        logger.debug('__find_contours()')
+        logger.debug('find_contours()')
 
-        mask_indexes_len = len(self.__masks_indexes)
-        if mask_indexes_len > 1:
-            logger.info(f'Finding contours for {mask_indexes_len} point values.')
+        if self.labels.size > 1:
+            logger.info(f'Finding contours for {self.labels.size} point values.')
             self.contours = []
-            for mask_index in self.__masks_indexes:
+            self.contours_labels = []
+            for mask_index in self.labels:
                 if mask_index != 0:
-                    mask = self.__points == mask_index
-                    mask_contours = measure.find_contours(mask)
-                    self.contours += mask_contours
+                    mask = self.labeled_image == mask_index
+                    # Avoid one contour inside another
+                    mask_filled = scipy.ndimage.binary_fill_holes(mask)
+                    mask_contours = measure.find_contours(mask_filled)
+                    for mask_contour in mask_contours:
+                        # skimage uses rows, columns
+                        self.contours.append(np.flip(mask_contour))
+                        self.contours_labels.append(mask_index)
         else:
             logger.info('There are no contours to find.')
 
-    def __find_contours_masks(self):
+    def find_contours_masks(self):
         """
         Find masks for every contour. A mask is an array with the same shape
         that the points provided, filled with False. The True values are inside
@@ -100,7 +107,7 @@ class Masks:
         """
 
         logger.info('Find contours masks')
-        logger.debug('__find_contours_masks()')
+        logger.debug('find_contours_masks()')
 
         contours_len = len(self.contours)
         if contours_len > 1:
@@ -108,7 +115,7 @@ class Masks:
             self.contours_masks = []
             for contour in self.contours:
                 contour_mask = np.zeros(
-                    (self.__points.shape[0], self.__points.shape[1]), 'uint8')
+                    (self.labeled_image.shape[0], self.labeled_image.shape[1]), 'uint8')
                 rows, columns = polygon(
                     contour[:, 1], contour[:, 0], contour_mask.shape)
                 contour_mask[rows, columns] = 1
@@ -117,70 +124,85 @@ class Masks:
         else:
             logger.info('There are no contours to work with.')
 
-    def __find_contours_centers(self):
+    def find_contours_centers(self):
         """
-        Find the centers for every mask for every contour found.
+        Find the centers for every contour found.
         """
 
-        logger.info('Find the centers of the contours masks')
-        logger.debug('__find_contours_centers()')
+        logger.info('Find the centers of the contours')
+        logger.debug('find_contours_centers()')
 
-        contours_masks_len = len(self.contours_masks)
-        if contours_masks_len > 1:
-            logger.info(f'Finding centers for {contours_masks_len} contours masks.')
-            self.contours_centers = []
-            for contour_mask in self.contours_masks:
-                contour_center = self.__find_mask_center(contour_mask)
-                self.contours_centers.append(contour_center)
+        mask_indexes_len = len(self.labels)
+        if mask_indexes_len > 1:
+            logger.info(f'Finding centers for {mask_indexes_len - 1} masks.')
+            contours_centers = []
+            for index, contour_mask in enumerate(self.contours_masks):
+                contour_label = self.contours_labels[index]
+                contour_center = self.find_mask_center(contour_mask, contour_label)
+                # scipy uses rows, columns
+                contours_centers.append(np.flip(contour_center))
+            # Add an extra center point, just in the center of the points
+            contours_centers.append([
+                self.labeled_image.shape[0] // 2,
+                self.labeled_image.shape[1] // 2
+            ])
+            self.contours_centers = np.array(contours_centers).astype(np.int16)
+            # Mark every center with 1 but the last one
+            self.contours_centers_labels = np.ones(len(self.contours_centers))
+            self.contours_centers_labels[-1] = 0
         else:
             logger.info('There are no contours masks to work with.')
 
-    def __find_contours_bounding_boxes(self):
+    def find_contours_bounding_boxes(self):
         """
         Find the bounding boxes for every contour mask found.
         """
 
         logger.info('Find the bounding boxes of the contours masks')
-        logger.debug('__find_bounding_boxes()')
+        logger.debug('find_bounding_boxes()')
 
-        contours_masks_len = len(self.contours_masks)
-        if contours_masks_len > 1:
-            logger.info(f'Finding bounding boxes for {contours_masks_len} contours masks.')
-            self.contours_bounding_boxes = []
+        if self.contours_masks is not None:
+            logger.info(f'Finding bounding boxes for {len(self.contours_masks)} contours masks.')
+            contours_bounding_boxes = []
             for contour in self.contours:
-                contour_bounding_box = self.__find_contour_bounding_box(contour)
-                self.contours_bounding_boxes.append(contour_bounding_box)
+                contour_bounding_box = self.find_contour_bounding_box(contour)
+                contours_bounding_boxes.append(contour_bounding_box)
+            self.contours_bounding_boxes = np.array(contours_bounding_boxes).astype(np.int16)
         else:
             logger.info('There are no contours masks to work with.')
 
-    def __find_mask_center(self, mask: np.array) -> np.array:
+    def find_mask_center(self, mask: np.array, contour_label: int) -> np.array:
         """
         Find the center of the mask where the values are True. If the resulting
         point is outside the mask, move it inside.
 
         :param mask: mask which center is needed.
+        :param contour_label: original label for the contour. Use it to check
+        if the center is inside the original region.
 
         :return: an array with the X and Y coordinates of the center of the
         mask.
         """
 
         logger.info("Find mask's center")
-        logger.debug(f'__find_mask_center('
-                     f'mask={mask.shape})')
+        logger.debug(f'find_mask_center('
+                     f'mask={mask.shape}, '
+                     f'contour_label={contour_label})')
 
+        original_mask = self.labeled_image == contour_label
         center_of_mass_x, center_of_mass_y = scipy.ndimage.center_of_mass(mask)
         center_of_mass = int(center_of_mass_x), int(center_of_mass_y)
-        if self.__is_point_inside_mask(mask, center_of_mass):
+        if self.is_point_inside_mask(original_mask, center_of_mass):
             logger.info("Point is inside mask")
-            center_x, center_y = self.__center_point_in_mask(mask, center_of_mass)
+            center_x, center_y = self.center_point_in_mask(mask, center_of_mass)
         else:
             logger.info("Point is outside mask")
-            center_x, center_y = self.__move_point_inside_mask(mask, center_of_mass)
+            center_x, center_y = self.move_point_inside_mask(original_mask, center_of_mass)
 
         return np.array([center_x, center_y])
 
     @staticmethod
-    def __is_point_inside_mask(mask: np.array, point: Tuple) -> bool:
+    def is_point_inside_mask(mask: np.array, point: Tuple) -> bool:
         """
         Checks whether a given point is inside the mask.
 
@@ -191,7 +213,7 @@ class Masks:
         """
 
         logger.info("Check if point is inside mask")
-        logger.debug(f'__is_point_inside_mask('
+        logger.debug(f'is_point_inside_mask('
                      f'mask={mask.shape}, '
                      f'point={point})')
 
@@ -205,7 +227,7 @@ class Masks:
         return result
 
     @staticmethod
-    def __center_point_in_mask(mask: np.array, point: Tuple) -> Tuple:
+    def center_point_in_mask(mask: np.array, point: Tuple) -> Tuple:
         """
         Center a given point in the mask. The point must be inside the mask.
 
@@ -216,7 +238,7 @@ class Masks:
         """
 
         logger.info("Center point inside mask")
-        logger.debug(f'__center_point_in_mask('
+        logger.debug(f'center_point_in_mask('
                      f'mask={mask.shape}, '
                      f'point={point})')
 
@@ -259,7 +281,7 @@ class Masks:
         return center_x, center_y
 
     @staticmethod
-    def __move_point_inside_mask(mask: np.array, point: Tuple) -> Tuple:
+    def move_point_inside_mask(mask: np.array, point: Tuple) -> Tuple:
         """
         Move and center a given point inside the mask.
 
@@ -270,7 +292,7 @@ class Masks:
         """
 
         logger.info("Move point inside mask")
-        logger.debug(f'__move_point_inside('
+        logger.debug(f'move_point_inside_mask('
                      f'mask={mask.shape}, '
                      f'point={point})')
 
@@ -330,18 +352,18 @@ class Masks:
                 raise NotImplementedError
 
             # Center the new point inside the mask's region.
-            new_point_centered = Masks.__center_point_in_mask(mask, new_point)
+            new_point_centered = SliceMasks.center_point_in_mask(mask, new_point)
         else:
             logger.info('We have not found an intersection with the mask')
             mask_points = np.where(mask == True)
             random_mask_point = random.randrange(len(mask_points[0]))
             new_point = mask_points[0][random_mask_point], mask_points[1][random_mask_point]
-            new_point_centered = Masks.__center_point_in_mask(mask, new_point)
+            new_point_centered = SliceMasks.center_point_in_mask(mask, new_point)
 
         return new_point_centered
 
     @staticmethod
-    def __find_contour_bounding_box(contour: np.array) -> np.array:
+    def find_contour_bounding_box(contour: np.array) -> np.array:
         """
         Given a contour, return its bounding box.
 
@@ -351,7 +373,7 @@ class Masks:
         """
 
         logger.info("Find contour mask's bounding box")
-        logger.debug(f'__find_contour_bounding_box('
+        logger.debug(f'find_contour_bounding_box('
                      f'contour={contour.shape})')
 
         x_min = np.min(contour[:, 0])
