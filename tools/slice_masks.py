@@ -109,9 +109,8 @@ class SliceMasks:
         logger.info('Find contours masks')
         logger.debug('find_contours_masks()')
 
-        contours_len = len(self.contours)
-        if contours_len > 1:
-            logger.info(f'Finding masks for {contours_len} contours.')
+        if self.contours is not None:
+            logger.info(f'Finding masks for {len(self.contours)} contours.')
             self.contours_masks = []
             for contour in self.contours:
                 contour_mask = np.zeros(
