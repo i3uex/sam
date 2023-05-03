@@ -33,12 +33,12 @@ IMAGE_NAMES=(
 mkdir -p ./$WORKING_DATA_PATH
 
 for IMAGE_NAME in "${IMAGE_NAMES[@]}"; do
-  echo "Processing image $IMAGE_NAME..."
+  echo "Processing image \"$IMAGE_NAME\"..."
   $PYTHON $SCRIPT \
     --input_file_path $DATASET_PATH/$IMAGES_PATH/"$IMAGE_NAME".nii.gz \
     --output_file_path $WORKING_DATA_PATH/image_"$IMAGE_NAME".npy \
     --swap_axes
-  echo "Processing masks $IMAGE_NAME..."
+  echo "Processing masks \"$IMAGE_NAME\"..."
   $PYTHON $SCRIPT \
     --input_file_path $DATASET_PATH/$MASKS_PATH/"$IMAGE_NAME".nii.gz \
     --output_file_path $WORKING_DATA_PATH/masks_"$IMAGE_NAME".npy \
