@@ -333,6 +333,7 @@ def process_image_slice(sam_predictor: SamPredictor,
                         masks: np.array,
                         slice_number: int,
                         apply_windowing: bool,
+                        use_masks_contours: bool,
                         use_bounding_box: bool,
                         debug: Debug) -> dict:
     """
@@ -343,6 +344,7 @@ def process_image_slice(sam_predictor: SamPredictor,
     :param masks: masks for each slice of the CT.
     :param slice_number: slice to work with.
     :param apply_windowing: if True, apply windowing to the image.
+    :param use_masks_contours: if True, get positive prompts from contours.
     :param use_bounding_box: if True, include a bounding box in the prompts.
     :param debug: instance of Debug class.
 
@@ -357,24 +359,27 @@ def process_image_slice(sam_predictor: SamPredictor,
                  f'masks={masks.shape}, '
                  f'slice_number={slice_number}, '
                  f'apply_windowing={apply_windowing}, '
+                 f'use_masks_contours={use_masks_contours}, '
                  f'use_bounding_box={use_bounding_box}, '
                  f'debug={debug.enabled})')
 
     image_slice = load_image_slice(image=image, slice_number=slice_number, apply_windowing=apply_windowing)
     masks_slice = load_masks_slice(masks=masks, slice_number=slice_number)
 
-    slice_masks = SliceMasks(labeled_image=masks_slice)
+    slice_masks = SliceMasks(
+        labeled_image=masks_slice,
+        use_masks_contours=use_masks_contours)
 
     mask = []
     score = []
     iou = None
     dice = None
 
-    if slice_masks.contours is not None:
-        point_coords = slice_masks.get_contours_centers_for_sam()
-        point_labels = slice_masks.contours_centers_labels
+    if slice_masks.labels.size > 1:
+        point_coords = slice_masks.get_point_coordinates()
+        point_labels = slice_masks.centers_labels
         if use_bounding_box:
-            box = slice_masks.get_contours_bounding_box_for_sam()
+            box = slice_masks.get_box()
         else:
             box = None
 
@@ -392,15 +397,15 @@ def process_image_slice(sam_predictor: SamPredictor,
         logger.info("There are no masks for the current slice")
 
     if debug.enabled:
-        if slice_masks.contours is not None:
+        if slice_masks.labels.size > 1:
             debug.set_slice_number(slice_number=slice_number)
 
             # Save SAM's prompt to YML
             prompts = dict()
-            for index, contour_center in enumerate(slice_masks.contours_centers):
+            for index, contour_center in enumerate(slice_masks.centers):
                 row = int(contour_center[0])
                 column = int(contour_center[1])
-                label = int(slice_masks.contours_centers_labels[index])
+                label = int(slice_masks.centers_labels[index])
                 prompts.update({
                     index: {
                         'row': row,
@@ -410,7 +415,7 @@ def process_image_slice(sam_predictor: SamPredictor,
                 })
 
             if use_bounding_box:
-                bounding_box = slice_masks.get_contours_bounding_box_for_sam()
+                bounding_box = slice_masks.get_box()
                 prompts.update({
                     'bounding_box': {
                         'row_min': int(bounding_box[1]),
@@ -438,11 +443,11 @@ def process_image_slice(sam_predictor: SamPredictor,
             for mask_contour in slice_masks.contours:
                 plt.plot(mask_contour[:, 1], mask_contour[:, 0], color='green')
             show_points(
-                coords=slice_masks.contours_centers,
-                labels=slice_masks.contours_centers_labels,
+                coords=slice_masks.centers,
+                labels=slice_masks.centers_labels,
                 ax=plt.gca())
             if use_bounding_box:
-                show_box(box=slice_masks.get_contours_bounding_box_for_sam(), ax=plt.gca())
+                show_box(box=slice_masks.get_box(), ax=plt.gca())
             plt.title(f"Score: {score[0]:.3f}", fontsize=18)
             plt.axis('off')
 
@@ -464,6 +469,7 @@ def process_image(sam_predictor: SamPredictor,
                   masks: np.array,
                   apply_windowing: bool,
                   use_bounding_box: bool,
+                  use_masks_contours: bool,
                   debug: Debug) -> Tuple[Path, Path]:
     """
     Process all the slices of a given image. Saves the result as two CSV files,
@@ -474,6 +480,7 @@ def process_image(sam_predictor: SamPredictor,
     :param image: array with the slices of the CT.
     :param masks: masks for each slice of the CT.
     :param apply_windowing: if True, apply windowing to the image.
+    :param use_masks_contours: if True, get positive prompts from contours.
     :param use_bounding_box: if True, include a bounding box in the prompts.
     :param debug: instance of Debug class.
 
@@ -486,6 +493,7 @@ def process_image(sam_predictor: SamPredictor,
                  f'image={image.shape}, '
                  f'masks={masks.shape}, '
                  f'apply_windowing={apply_windowing}, '
+                 f'use_masks_contours={use_masks_contours}, '
                  f'use_bounding_box={use_bounding_box}, '
                  f'debug={debug.enabled})')
 
@@ -499,6 +507,7 @@ def process_image(sam_predictor: SamPredictor,
                                      masks=masks,
                                      slice_number=slice_number,
                                      apply_windowing=apply_windowing,
+                                     use_masks_contours=use_masks_contours,
                                      use_bounding_box=use_bounding_box,
                                      debug=debug)
         results.append(result)
@@ -511,14 +520,15 @@ def process_image(sam_predictor: SamPredictor,
     return results_path, raw_data_path
 
 
-def parse_arguments() -> Tuple[Path, Path, int, bool, bool, bool, bool]:
+def parse_arguments() -> Tuple[Path, Path, int, bool, bool, bool, bool, bool]:
     """
     Parse arguments passed via command line, returning them formatted. Adequate
     defaults are provided when possible.
 
     :return: path of the image file, path of the masks file, slice to work
-    with, perform windowing on the image slice, use a bounding box as a
-    prompt, dry run option, debug option.
+    with, perform windowing on the image slice, use mask contours to get the
+    positive point prompts, use a bounding box as a prompt, dry run option,
+    debug option.
     """
 
     logger.info('Get script arguments')
@@ -538,6 +548,9 @@ def parse_arguments() -> Tuple[Path, Path, int, bool, bool, bool, bool]:
     argument_parser.add_argument('-w', '--apply_windowing',
                                  action='store_true',
                                  help='apply windowing to the image')
+    argument_parser.add_argument('-c', '--use_masks_contours',
+                                 action='store_true',
+                                 help='get positive prompts from contours')
     argument_parser.add_argument('-b', '--use_bounding_box',
                                  action='store_true',
                                  help='include a bounding box in the prompts')
@@ -558,12 +571,14 @@ def parse_arguments() -> Tuple[Path, Path, int, bool, bool, bool, bool]:
     else:
         slice_number = None
     apply_windowing = arguments.apply_windowing
+    use_masks_contours = arguments.use_masks_contours
     use_bounding_box = arguments.use_bounding_box
     dry_run = arguments.dry_run
     debug = arguments.debug
 
     return Path(image_file_path), Path(masks_file_path), \
-        slice_number, apply_windowing, use_bounding_box, dry_run, debug
+        slice_number, apply_windowing, use_masks_contours, use_bounding_box, \
+        dry_run, debug
 
 
 def get_summary(
@@ -571,6 +586,7 @@ def get_summary(
         masks_file_path: Path,
         slice_number: int,
         apply_windowing: bool,
+        use_masks_contours: bool,
         use_bounding_box: bool,
         dry_run: bool,
         debug: Debug
@@ -582,6 +598,7 @@ def get_summary(
     :param masks_file_path: path to the masks file.
     :param slice_number: slice to work with.
     :param apply_windowing: if True, apply windowing to the image.
+    :param use_masks_contours: if True, get positive prompts from contours.
     :param use_bounding_box: if True, include a bounding box in the prompts.
     :param dry_run: if True, the actions will not be performed.
     :param debug: instance of Debug class.
@@ -595,6 +612,7 @@ def get_summary(
                  f'masks_file_path="{masks_file_path}", '
                  f'slice_number={slice_number}, '
                  f'apply_windowing={apply_windowing}, '
+                 f'use_masks_contours={use_masks_contours}, '
                  f'use_bounding_box={use_bounding_box}, '
                  f'debug={debug}, '
                  f'dry_run={dry_run})')
@@ -612,6 +630,7 @@ def get_summary(
               f'- Masks file path: "{masks_file_path}"\n' \
               f'- Slice: {slice_number}\n' \
               f'- Apply windowing: {apply_windowing}\n' \
+              f'- Use masks contours: {use_masks_contours}\n' \
               f'- Use bounding box: {use_bounding_box}\n' \
               f'- Debug: {debug.enabled}\n' \
               f'- Dry run: {dry_run}\n' \
@@ -642,8 +661,9 @@ def main():
 
     summarizer = Summarizer()
 
-    image_file_path, masks_file_path, slice_number, apply_windowing, \
-        use_bounding_box, dry_run, debug_enabled = parse_arguments()
+    image_file_path, masks_file_path, slice_number, \
+        apply_windowing, use_masks_contours, use_bounding_box, \
+        dry_run, debug_enabled = parse_arguments()
 
     debug = Debug(
         enabled=debug_enabled,
@@ -655,6 +675,7 @@ def main():
         masks_file_path=masks_file_path,
         slice_number=slice_number,
         apply_windowing=apply_windowing,
+        use_masks_contours=use_masks_contours,
         use_bounding_box=use_bounding_box,
         debug=debug,
         dry_run=dry_run)
@@ -674,6 +695,7 @@ def main():
                                image=image,
                                masks=masks,
                                apply_windowing=apply_windowing,
+                               use_masks_contours=use_masks_contours,
                                use_bounding_box=use_bounding_box,
                                debug=debug)
         print(f'Results saved to: "{str(result[0])}"')
@@ -684,6 +706,7 @@ def main():
                                      masks=masks,
                                      slice_number=slice_number,
                                      apply_windowing=apply_windowing,
+                                     use_masks_contours=use_masks_contours,
                                      use_bounding_box=use_bounding_box,
                                      debug=debug)
         print(f'IoU: {result[IoUKey]:.3f}')
