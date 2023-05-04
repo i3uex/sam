@@ -93,16 +93,14 @@ class SliceMasks:
             logger.info(f'Finding contours for {self.labels.size} labels.')
             self.contours = []
             self.contours_labels = []
-            for mask_index in self.labels:
-                if mask_index != 0:
-                    mask = self.labeled_image == mask_index
-                    # Avoid one contour inside another
-                    mask_filled = scipy.ndimage.binary_fill_holes(mask)
-                    mask_contours = measure.find_contours(mask_filled)
-                    for mask_contour in mask_contours:
-                        # skimage uses rows, columns
-                        self.contours.append(np.flip(mask_contour))
-                        self.contours_labels.append(mask_index)
+            for label in range(1, self.labels.size):
+                mask = self.labeled_image == label
+                # Avoid one contour inside another
+                mask_filled = scipy.ndimage.binary_fill_holes(mask)
+                mask_contours = measure.find_contours(mask_filled)
+                for mask_contour in mask_contours:
+                    self.contours.append(mask_contour)
+                    self.contours_labels.append(label)
         else:
             logger.info('There are no contours to find.')
 
@@ -123,7 +121,7 @@ class SliceMasks:
                 contour_mask = np.zeros(
                     (self.labeled_image.shape[0], self.labeled_image.shape[1]), 'uint8')
                 rows, columns = polygon(
-                    contour[:, 1], contour[:, 0], contour_mask.shape)
+                    contour[:, 0], contour[:, 1], contour_mask.shape)
                 contour_mask[rows, columns] = 1
                 contour_mask = contour_mask == 1
                 self.contours_masks.append(contour_mask)
@@ -145,8 +143,7 @@ class SliceMasks:
             for index, contour_mask in enumerate(self.contours_masks):
                 contour_label = self.contours_labels[index]
                 contour_center = self.find_mask_center(contour_mask, contour_label)
-                # scipy uses rows, columns
-                contours_centers.append(np.flip(contour_center))
+                contours_centers.append(contour_center)
             # Add an extra center point, just in the center of the points
             contours_centers.append([
                 self.labeled_image.shape[0] // 2,
@@ -186,8 +183,8 @@ class SliceMasks:
         :param contour_label: original label for the contour. Use it to check
         if the center is inside the original region.
 
-        :return: an array with the X and Y coordinates of the center of the
-        mask.
+        :return: an array with the row and column coordinates of the center of
+        the mask.
         """
 
         logger.info("Find mask's center")
@@ -196,16 +193,16 @@ class SliceMasks:
                      f'contour_label={contour_label})')
 
         original_mask = self.labeled_image == contour_label
-        center_of_mass_x, center_of_mass_y = scipy.ndimage.center_of_mass(mask)
-        center_of_mass = int(center_of_mass_x), int(center_of_mass_y)
+        center_of_mass_row, center_of_mass_column = scipy.ndimage.center_of_mass(mask)
+        center_of_mass = int(center_of_mass_row), int(center_of_mass_column)
         if self.is_point_inside_mask(original_mask, center_of_mass):
             logger.info("Point is inside mask")
-            center_x, center_y = self.center_point_in_mask(mask, center_of_mass)
+            center_row, center_column = self.center_point_in_mask(original_mask, center_of_mass)
         else:
             logger.info("Point is outside mask")
-            center_x, center_y = self.move_point_inside_mask(original_mask, center_of_mass)
+            center_row, center_column = self.move_point_inside_mask(original_mask, center_of_mass)
 
-        return np.array([center_x, center_y])
+        return np.array([center_row, center_column])
 
     @staticmethod
     def is_point_inside_mask(mask: np.array, point: Tuple) -> bool:
@@ -213,7 +210,7 @@ class SliceMasks:
         Checks whether a given point is inside the mask.
 
         :param mask: mask where the point should be inside.
-        :param point: X and Y coordinates of the point.
+        :param point: row and column coordinates of the point.
 
         :return: True if the point is inside the mask, False otherwise.
         """
@@ -223,12 +220,12 @@ class SliceMasks:
                      f'mask={mask.shape}, '
                      f'point={point})')
 
-        x, y = point
+        row, column = point
 
-        assert 0 <= x < mask.shape[0]
-        assert 0 <= y < mask.shape[1]
+        assert 0 <= row < mask.shape[0]
+        assert 0 <= column < mask.shape[1]
 
-        result = mask[x, y]
+        result = mask[row, column]
 
         return result
 
@@ -238,7 +235,7 @@ class SliceMasks:
         Center a given point in the mask. The point must be inside the mask.
 
         :param mask: mask where the point should be centered.
-        :param point: X and Y coordinates of the point.
+        :param point: row and column coordinates of the point.
 
         :return: new coordinates of the point, now centered in the mask.
         """
@@ -248,43 +245,43 @@ class SliceMasks:
                      f'mask={mask.shape}, '
                      f'point={point})')
 
-        x, y = point
+        row, column = point
 
         # Check the point's coordinates are in the boundaries of the mask's
         # points.
-        assert 0 <= x < mask.shape[0]
-        assert 0 <= y < mask.shape[1]
+        assert 0 <= row < mask.shape[0]
+        assert 0 <= column < mask.shape[1]
 
         # Check the point is inside the mask.
-        assert mask[x, y]
+        assert mask[row, column]
 
-        # Get the mask's points in the X axis of the point: the last False
-        # to the left, the first to the right. This is done to avoid multiple
-        # cuts to the mask, we are only interested in the region adjacent to
-        # the center.
-        mask_points_left = mask[:x, y]
+        # Get the mask's points in the row of the point: the last False to the
+        # left, the first to the right. This is done to avoid multiple cuts to
+        # the mask, we are only interested in the region adjacent to the
+        # center.
+        mask_points_left = mask[row, :column]
         mask_points_left_start = np.where(mask_points_left == False)[0][-1]
         mask_points_left = mask_points_left[mask_points_left_start + 1:]
 
-        mask_points_right = mask[x + 1:, y]
+        mask_points_right = mask[row, column + 1:]
         mask_points_right_end = np.where(mask_points_right == False)[0][0]
         mask_points_right = mask_points_right[:mask_points_right_end]
 
-        # Get the mask's points in the Y axis of the point: the last False
+        # Get the mask's points in the column axis of the point: the last False
         # above, the first below. This is done to avoid multiple cuts to the
         # mask, we are only interested in the region adjacent to the center.
-        mask_points_above = mask[x, :y]
+        mask_points_above = mask[:row, column]
         mask_points_above_start = np.where(mask_points_above == False)[0][-1]
         mask_points_above = mask_points_above[mask_points_above_start + 1:]
 
-        mask_points_below = mask[x, y + 1:]
+        mask_points_below = mask[row + 1:, column]
         mask_points_below_end = np.where(mask_points_below == False)[0][0]
         mask_points_below = mask_points_below[:mask_points_below_end]
 
-        center_x = ((x - len(mask_points_left)) + (x + len(mask_points_right)) + 1) // 2
-        center_y = ((y - len(mask_points_above)) + (y + len(mask_points_below)) + 1) // 2
+        center_row = ((row - len(mask_points_left)) + (row + len(mask_points_right)) + 1) // 2
+        center_column = ((column - len(mask_points_above)) + (column + len(mask_points_below)) + 1) // 2
 
-        return center_x, center_y
+        return center_row, center_column
 
     @staticmethod
     def move_point_inside_mask(mask: np.array, point: Tuple) -> Tuple:
@@ -292,7 +289,7 @@ class SliceMasks:
         Move and center a given point inside the mask.
 
         :param mask: mask where the point should be inside.
-        :param point: X and Y coordinates of the point.
+        :param point: row and column coordinates of the point.
 
         :return: new coordinates of the point, now centered inside in the mask.
         """
@@ -302,27 +299,27 @@ class SliceMasks:
                      f'mask={mask.shape}, '
                      f'point={point})')
 
-        x, y = point
+        row, column = point
 
         # Check the point's coordinates are in the boundaries of the mask's
         # points.
-        assert 0 <= x < mask.shape[0]
-        assert 0 <= y < mask.shape[1]
+        assert 0 <= row < mask.shape[0]
+        assert 0 <= column < mask.shape[1]
 
         # Check the point is outside the mask.
-        assert not mask[x, y]
+        assert not mask[row, column]
 
         # Get the mask points left, right, above and below the given point.
-        mask_points_left = mask[:x, y]
-        mask_points_right = mask[x + 1:, y]
-        mask_points_above = mask[x, :y]
-        mask_points_below = mask[x, y + 1:]
+        mask_points_left = mask[row, :column]
+        mask_points_right = mask[row, column + 1:]
+        mask_points_above = mask[:row, column]
+        mask_points_below = mask[row + 1:, column]
 
         # Get the segment of the mask in each list of points.
         mask_segment_left = np.where(mask_points_left == True)[0]
-        mask_segment_right = np.where(mask_points_right == True)[0] + x + 1
+        mask_segment_right = np.where(mask_points_right == True)[0] + column + 1
         mask_segment_above = np.where(mask_points_above == True)[0]
-        mask_segment_below = np.where(mask_points_below == True)[0] + y + 1
+        mask_segment_below = np.where(mask_points_below == True)[0] + row + 1
 
         # Put them in a list to get the max.
         mask_segments = [
@@ -344,16 +341,16 @@ class SliceMasks:
             new_point_location = PointLocation(mask_segments_lengths_arg_max)
             if new_point_location == PointLocation.Left:
                 logger.info('We have found an intersection with the mask on the left')
-                new_point = mask_segment_max_center, y
+                new_point = row, mask_segment_max_center
             elif new_point_location == PointLocation.Right:
                 logger.info('We have found an intersection with the mask on the right')
-                new_point = mask_segment_max_center, y
+                new_point = row, mask_segment_max_center
             elif new_point_location == PointLocation.Above:
                 logger.info('We have found an intersection with the mask above')
-                new_point = x, mask_segment_max_center
+                new_point = mask_segment_max_center, column
             elif new_point_location == PointLocation.Below:
                 logger.info('We have found an intersection with the mask below')
-                new_point = x, mask_segment_max_center
+                new_point = mask_segment_max_center, column
             else:
                 raise NotImplementedError
 
@@ -374,7 +371,7 @@ class SliceMasks:
         Given a contour, return its bounding box.
 
         :param contour: contour which bounding box is needed.
-        :return: contour's bounding box, x coordinates first, y coordinates
+        :return: contour's bounding box, row coordinates first, row coordinates
         last.
         """
 
@@ -382,9 +379,9 @@ class SliceMasks:
         logger.debug(f'find_contour_bounding_box('
                      f'contour={contour.shape})')
 
-        x_min = np.min(contour[:, 0])
-        x_max = np.max(contour[:, 0])
-        y_min = np.min(contour[:, 1])
-        y_max = np.max(contour[:, 1])
+        row_min = np.min(contour[:, 0])
+        column_min = np.min(contour[:, 1])
+        row_max = np.max(contour[:, 0])
+        column_max = np.max(contour[:, 1])
 
-        return [x_min, x_max, y_min, y_max]
+        return [row_min, column_min, row_max, column_max]

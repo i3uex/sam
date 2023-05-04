@@ -60,12 +60,27 @@ def show_mask(mask, ax, random_color=False):
 # TODO: add documentation to this method, taken from SAM's notebooks.
 # https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb
 def show_points(coords, labels, ax, marker_size=375):
-    pos_points = coords[labels == 1]
-    neg_points = coords[labels == 0]
-    ax.scatter(pos_points[:, 0], pos_points[:, 1], color='green', marker='*', s=marker_size, edgecolor='white',
+    positive_points = coords[labels == 1]
+    negative_points = coords[labels == 0]
+
+    # scatter shows x and y, but we are using rows and columns (y and x)
+    rows = positive_points[:, 0]
+    columns = positive_points[:, 1]
+    ax.scatter(columns, rows, color='green', marker='*', s=marker_size, edgecolor='white',
                linewidth=1.25)
-    ax.scatter(neg_points[:, 0], neg_points[:, 1], color='red', marker='*', s=marker_size, edgecolor='white',
+    rows = negative_points[:, 0]
+    columns = negative_points[:, 1]
+    ax.scatter(columns, rows, color='red', marker='*', s=marker_size, edgecolor='white',
                linewidth=1.25)
+
+
+# TODO: add documentation to this method, taken from SAM's notebooks.
+# https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb
+def show_box(box, ax):
+    row_min, column_min, row_max, column_max = box
+    x0, y0 = column_min, row_min
+    w, h = column_max - column_min, row_max - row_min
+    ax.add_patch(plt.Rectangle((x0, y0), w, h, edgecolor='green', facecolor=(0, 0, 0, 0), lw=2))
 
 
 # TODO: use this method only when needed, this is, only if the image is not
@@ -250,13 +265,11 @@ def compare_original_and_predicted_masks(
                  f'original_mask={original_mask.shape}, '
                  f'predicted_mask={predicted_mask.shape})')
 
-    original_mask_transformed = original_mask != 0
-
-    original_mask_transformed = np.fliplr(np.rot90(original_mask_transformed, k=3))
+    original_mask_as_bool = original_mask != 0
     predicted_mask_transformed = np.squeeze(predicted_mask)
 
-    intersection = original_mask_transformed * predicted_mask_transformed
-    union = (original_mask_transformed + predicted_mask_transformed) > 0
+    intersection = original_mask_as_bool * predicted_mask_transformed
+    union = (original_mask_as_bool + predicted_mask_transformed) > 0
 
     iou = intersection.sum() / float(union.sum())
     dice = intersection.sum() * 2 / (original_mask.sum() + predicted_mask.sum())
@@ -358,9 +371,9 @@ def process_image_slice(sam_predictor: SamPredictor,
     if slice_masks.contours is not None:
         sam_predictor.set_image(image_slice)
         mask, score, logits = sam_predictor.predict(
-            point_coords=slice_masks.contours_centers,
+            point_coords=np.flip(slice_masks.contours_centers, axis=1),
             point_labels=slice_masks.contours_centers_labels,
-            box=slice_masks.contours_bounding_boxes[0],
+            # box=slice_masks.contours_bounding_boxes[0],
             multimask_output=False)
 
         # Compare original and predicted lung masks
@@ -376,13 +389,13 @@ def process_image_slice(sam_predictor: SamPredictor,
             # Save SAM's prompt to YML
             prompts = dict()
             for index, contour_center in enumerate(slice_masks.contours_centers):
-                x = int(contour_center[0])
-                y = int(contour_center[1])
+                row = int(contour_center[0])
+                column = int(contour_center[1])
                 label = int(slice_masks.contours_centers_labels[index])
                 prompts.update({
                     index: {
-                        'x': x,
-                        'y': y,
+                        'row': row,
+                        'column': column,
                         'label': label
                     }
                 })
@@ -403,24 +416,13 @@ def process_image_slice(sam_predictor: SamPredictor,
             plt.imshow(image_slice)
             show_mask(mask, plt.gca())
             for mask_contour in slice_masks.contours:
-                plt.plot(mask_contour[:, 0], mask_contour[:, 1], color='green')
+                plt.plot(mask_contour[:, 1], mask_contour[:, 0], color='green')
             show_points(
                 coords=slice_masks.contours_centers,
                 labels=slice_masks.contours_centers_labels,
                 ax=plt.gca())
             for contours_bounding_box in slice_masks.contours_bounding_boxes:
-                xs = [contours_bounding_box[0],
-                      contours_bounding_box[1],
-                      contours_bounding_box[1],
-                      contours_bounding_box[0],
-                      contours_bounding_box[0]]
-                ys = [contours_bounding_box[3],
-                      contours_bounding_box[3],
-                      contours_bounding_box[2],
-                      contours_bounding_box[2],
-                      contours_bounding_box[3]]
-                plt.plot(xs, ys, color='blue', linewidth=1.25)
-                break
+                show_box(box=contours_bounding_box, ax=plt.gca())
             plt.title(f"Score: {score[0]:.3f}", fontsize=18)
             plt.axis('off')
 
