@@ -41,8 +41,6 @@ DatasetPath = Path('datasets/zenodo')
 DebugFolderPath = Path('debug')
 
 # Windowing settings
-# TODO: this could be redundant when working with Radiopaedia images, they
-#   appear to have the corresponding windowing already applied.
 WindowWidth = 1500
 WindowLevel = -650
 
@@ -176,14 +174,15 @@ def load_masks(masks_file_path: Path) -> np.array:
     return masks
 
 
-def load_image_slice(image: np.array, slice_number: int) -> np.array:
+def load_image_slice(image: np.array, slice_number: int, apply_windowing: bool) -> np.array:
     """
     Return a slice from a CT image, given its position. The slice is windowed
-    to improve its contrast, converted to greyscale, and expanded to RGB. It
-    checks if the slice number exists.
+    to improve its contrast if needed, converted to greyscale, and expanded to
+    RGB. It checks if the slice number exists.
 
     :param image: CT image from which to get the slice.
     :param slice_number: slice number to get from the image.
+    :param apply_windowing: if True, apply windowing to the image.
 
     :return: slice from a CT image.
     """
@@ -191,14 +190,16 @@ def load_image_slice(image: np.array, slice_number: int) -> np.array:
     logger.info('Load a slice from a CT image')
     logger.debug(f'load_image_slice('
                  f'image={image.shape}, '
-                 f'slice_number={slice_number})')
+                 f'slice_number={slice_number}, '
+                 f'apply_windowing={apply_windowing})')
 
     assert 0 <= slice_number < image.shape[-1]
     logger.info("Requested slice exists.")
 
     image_slice = image[:, :, slice_number]
 
-    image_slice = windowing(image_slice)
+    if apply_windowing:
+        image_slice = windowing(image_slice)
     image_slice = to_greyscale(image_slice)
     image_slice = image_slice.astype(np.uint8)
     image_slice = np.stack((image_slice,) * 3, axis=-1)
@@ -319,6 +320,7 @@ def process_image_slice(sam_predictor: SamPredictor,
                         image: np.array,
                         masks: np.array,
                         slice_number: int,
+                        apply_windowing: bool,
                         debug: Debug) -> dict:
     """
     Process a slice of the image. Returns the result of the analysis.
@@ -327,6 +329,7 @@ def process_image_slice(sam_predictor: SamPredictor,
     :param image: array with the slices of the CT.
     :param masks: masks for each slice of the CT.
     :param slice_number: slice to work with.
+    :param apply_windowing: if True, apply windowing to the image.
     :param debug: instance of Debug class.
 
     :return: a dictionary with the number of the slice been processed and the
@@ -339,9 +342,10 @@ def process_image_slice(sam_predictor: SamPredictor,
                  f'image={image.shape}, '
                  f'masks={masks.shape}, '
                  f'slice_number={slice_number}, '
+                 f'apply_windowing={apply_windowing}, '
                  f'debug={debug.enabled})')
 
-    image_slice = load_image_slice(image=image, slice_number=slice_number)
+    image_slice = load_image_slice(image=image, slice_number=slice_number, apply_windowing=apply_windowing)
     masks_slice = load_masks_slice(masks=masks, slice_number=slice_number)
 
     slice_masks = SliceMasks(labeled_image=masks_slice)
@@ -436,6 +440,7 @@ def process_image_slice(sam_predictor: SamPredictor,
 def process_image(sam_predictor: SamPredictor,
                   image: np.array,
                   masks: np.array,
+                  apply_windowing: bool,
                   debug: Debug) -> Tuple[Path, Path]:
     """
     Process all the slices of a given image. Saves the result as two CSV files,
@@ -445,6 +450,7 @@ def process_image(sam_predictor: SamPredictor,
     :param sam_predictor: SAM predictor for image segmentation.
     :param image: array with the slices of the CT.
     :param masks: masks for each slice of the CT.
+    :param apply_windowing: if True, apply windowing to the image.
     :param debug: instance of Debug class.
 
     :return: paths where the resulting CSV files are stored.
@@ -455,6 +461,7 @@ def process_image(sam_predictor: SamPredictor,
                  f'sam_predictor={sam_predictor.device.type}, '
                  f'image={image.shape}, '
                  f'masks={masks.shape}, '
+                 f'apply_windowing={apply_windowing}, '
                  f'debug={debug.enabled})')
 
     items = image.shape[-1]
@@ -466,6 +473,7 @@ def process_image(sam_predictor: SamPredictor,
                                      image=image,
                                      masks=masks,
                                      slice_number=slice_number,
+                                     apply_windowing=apply_windowing,
                                      debug=debug)
         results.append(result)
         progress_bar.update()
@@ -477,13 +485,13 @@ def process_image(sam_predictor: SamPredictor,
     return results_path, raw_data_path
 
 
-def parse_arguments() -> Tuple[Path, Path, int, bool, bool]:
+def parse_arguments() -> Tuple[Path, Path, int, bool, bool, bool]:
     """
     Parse arguments passed via command line, returning them formatted. Adequate
     defaults are provided when possible.
 
     :return: path of the image file, path of the masks file, slice to work
-    with, dry run option, debug option.
+    with, perform windowing on the image slice, dry run option, debug option.
     """
 
     logger.info('Get script arguments')
@@ -500,6 +508,9 @@ def parse_arguments() -> Tuple[Path, Path, int, bool, bool]:
     argument_parser.add_argument('-s', '--slice',
                                  required=False,
                                  help='slice to work with')
+    argument_parser.add_argument('-w', '--apply_windowing',
+                                 action='store_true',
+                                 help='apply windowing to the image')
     argument_parser.add_argument('-n', '--dry_run',
                                  action='store_true',
                                  help='show what would be done, do not do it')
@@ -516,16 +527,19 @@ def parse_arguments() -> Tuple[Path, Path, int, bool, bool]:
         slice_number = ArgumentParserHelper.parse_integer(arguments.slice)
     else:
         slice_number = None
-    debug = arguments.debug
+    apply_windowing = arguments.apply_windowing
     dry_run = arguments.dry_run
+    debug = arguments.debug
 
-    return Path(image_file_path), Path(masks_file_path), slice_number, debug, dry_run
+    return Path(image_file_path), Path(masks_file_path), \
+        slice_number, apply_windowing, dry_run, debug
 
 
 def get_summary(
         image_file_path: Path,
         masks_file_path: Path,
         slice_number: int,
+        apply_windowing: bool,
         dry_run: bool,
         debug: Debug
 ) -> str:
@@ -535,8 +549,9 @@ def get_summary(
     :param image_file_path: path to the images file.
     :param masks_file_path: path to the masks file.
     :param slice_number: slice to work with.
-    :param debug: instance of Debug class.
+    :param apply_windowing: if True, apply windowing to the image.
     :param dry_run: if True, the actions will not be performed.
+    :param debug: instance of Debug class.
 
     :return: summary of the actions this script will perform.
     """
@@ -546,6 +561,7 @@ def get_summary(
                  f'image_file_path="{image_file_path}", '
                  f'masks_file_path="{masks_file_path}", '
                  f'slice_number={slice_number}, '
+                 f'apply_windowing={apply_windowing}, '
                  f'debug={debug}, '
                  f'dry_run={dry_run})')
 
@@ -561,6 +577,7 @@ def get_summary(
     summary = f'- Image file path: "{image_file_path}"\n' \
               f'- Masks file path: "{masks_file_path}"\n' \
               f'- Slice: {slice_number}\n' \
+              f'- Apply windowing: {apply_windowing}\n' \
               f'- Debug: {debug.enabled}\n' \
               f'- Dry run: {dry_run}\n' \
               f'- Image slices: {image_slices}\n' \
@@ -590,7 +607,8 @@ def main():
 
     summarizer = Summarizer()
 
-    image_file_path, masks_file_path, slice_number, debug_enabled, dry_run = parse_arguments()
+    image_file_path, masks_file_path, slice_number, apply_windowing, \
+        dry_run, debug_enabled = parse_arguments()
 
     debug = Debug(
         enabled=debug_enabled,
@@ -601,6 +619,7 @@ def main():
         image_file_path=image_file_path,
         masks_file_path=masks_file_path,
         slice_number=slice_number,
+        apply_windowing=apply_windowing,
         debug=debug,
         dry_run=dry_run)
 
@@ -618,6 +637,7 @@ def main():
         result = process_image(sam_predictor=sam_predictor,
                                image=image,
                                masks=masks,
+                               apply_windowing=apply_windowing,
                                debug=debug)
         print(f'Results saved to: "{str(result[0])}"')
         print(f'Raw data saved to: "{str(result[1])}"')
@@ -626,6 +646,7 @@ def main():
                                      image=image,
                                      masks=masks,
                                      slice_number=slice_number,
+                                     apply_windowing=apply_windowing,
                                      debug=debug)
         print(f'IoU: {result[IoUKey]:.3f}')
         print(f'Dice: {result[DiceKey]:.3f}')
