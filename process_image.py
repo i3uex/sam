@@ -197,6 +197,7 @@ def load_image_slice(image: np.array, slice_number: int) -> np.array:
     logger.info("Requested slice exists.")
 
     image_slice = image[:, :, slice_number]
+
     image_slice = windowing(image_slice)
     image_slice = to_greyscale(image_slice)
     image_slice = image_slice.astype(np.uint8)
