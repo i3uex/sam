@@ -93,14 +93,15 @@ class SliceMasks:
             logger.info(f'Finding contours for {self.labels.size} labels.')
             self.contours = []
             self.contours_labels = []
-            for label in range(1, self.labels.size):
-                mask = self.labeled_image == label
-                # Avoid one contour inside another
-                mask_filled = scipy.ndimage.binary_fill_holes(mask)
-                mask_contours = measure.find_contours(mask_filled)
-                for mask_contour in mask_contours:
-                    self.contours.append(mask_contour)
-                    self.contours_labels.append(label)
+            for label in self.labels:
+                if label != 0:
+                    mask = self.labeled_image == label
+                    # Avoid one contour inside another
+                    mask_filled = scipy.ndimage.binary_fill_holes(mask)
+                    mask_contours = measure.find_contours(mask_filled)
+                    for mask_contour in mask_contours:
+                        self.contours.append(mask_contour)
+                        self.contours_labels.append(label)
         else:
             logger.info('There are no contours to find.')
 
