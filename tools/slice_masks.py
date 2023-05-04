@@ -75,7 +75,7 @@ class SliceMasks:
         logger.debug('process_labeled_image()')
 
         self.labels = np.unique(self.labeled_image)
-        if len(self.labels) > 1:
+        if self.labels.size > 1:
             self.find_contours()
             self.find_contours_masks()
             self.find_contours_centers()
