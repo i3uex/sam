@@ -41,6 +41,8 @@ DatasetPath = Path('datasets/zenodo')
 DebugFolderPath = Path('debug')
 
 # Windowing settings
+# TODO: this could be redundant when working with Radiopaedia images, they
+#   appear to have the corresponding windowing already applied.
 WindowWidth = 1500
 WindowLevel = -650
 
