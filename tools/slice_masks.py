@@ -279,8 +279,19 @@ class SliceMasks:
         mask_points_below_end = np.where(mask_points_below == False)[0][0]
         mask_points_below = mask_points_below[:mask_points_below_end]
 
-        center_row = ((row - len(mask_points_left)) + (row + len(mask_points_right)) + 1) // 2
-        center_column = ((column - len(mask_points_above)) + (column + len(mask_points_below)) + 1) // 2
+        mask_points_left_len = len(mask_points_left)
+        mask_points_right_len = len(mask_points_right)
+        mask_points_above_len = len(mask_points_above)
+        mask_points_below_len = len(mask_points_below)
+        mask_points_in_row = mask_points_left_len + mask_points_right_len
+        mask_points_in_column = mask_points_above_len + mask_points_below_len
+
+        if mask_points_in_row > mask_points_in_column:
+            center_row = row
+            center_column = column + (mask_points_right_len - mask_points_left_len + 1) // 2
+        else:
+            center_row = row + (mask_points_below_len - mask_points_above_len + 1) // 2
+            center_column = column
 
         return center_row, center_column
 
