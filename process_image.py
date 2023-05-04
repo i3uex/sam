@@ -77,7 +77,6 @@ def to_greyscale(image: np.ndarray) -> np.ndarray:
     :param image: slice of the CT image to greyscale.
 
     :return: slice of the CT image in greyscale.
-    :rtype: np.ndarray
     """
 
     logger.info('Apply windowing to CT image slice')
@@ -100,7 +99,6 @@ def windowing(image: np.ndarray) -> np.ndarray:
     :param image: slice of the CT image to window.
 
     :return: windowed slice of the CT image.
-    :rtype: np.ndarray
     """
 
     logger.info('Apply windowing to CT image slice')
@@ -121,7 +119,6 @@ def get_sam_predictor(sam_model: SamModel) -> SamPredictor:
     :param sam_model: model name and checkpoint to use.
 
     :return: an instance of the SAM predictor, given the model details.
-    :rtype: SamPredictor
     """
 
     logger.info('Get SAM predictor instance')
@@ -144,7 +141,6 @@ def load_image(image_file_path: Path) -> np.array:
     :param image_file_path: path of the image file.
 
     :return: CT image.
-    :rtype: np.array
     """
 
     logger.info('Load the CT image')
@@ -163,7 +159,6 @@ def load_masks(masks_file_path: Path) -> np.array:
     :param masks_file_path: path of the masks file.
 
     :return: masks for the CT image.
-    :rtype: np.array
     """
 
     logger.info('Load the CT image masks')
@@ -185,7 +180,6 @@ def load_image_slice(image: np.array, slice_number: int) -> np.array:
     :param slice_number: slice number to get from the image.
 
     :return: slice from a CT image.
-    :rtype: np.array
     """
 
     logger.info('Load a slice from a CT image')
@@ -214,7 +208,6 @@ def load_masks_slice(masks: np.array, slice_number: int) -> np.array:
     :param slice_number: masks slice number to get from the list of masks.
 
     :return: masks slice from a list of masks.
-    :rtype: np.array
     """
 
     logger.info('Load a masks slice from the list of masks')
@@ -484,7 +477,6 @@ def parse_arguments() -> Tuple[Path, Path, int, bool, bool]:
 
     :return: path of the image file, path of the masks file, slice to work
     with, dry run option, debug option.
-    :rtype: Tuple[Path, Path, int, bool, bool]
     """
 
     logger.info('Get script arguments')
@@ -540,7 +532,6 @@ def get_summary(
     :param dry_run: if True, the actions will not be performed.
 
     :return: summary of the actions this script will perform.
-    :rtype: str
     """
 
     logger.info('Get summary')
