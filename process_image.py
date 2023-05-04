@@ -1,8 +1,12 @@
 """
 Process a CT image or a slice of it. It performs the following steps:
 
-1. If there are masks for the lungs, find their centers of mass.
-2. Use them as positive prompts ("I'm looking for what this points mark").
+1. If there are masks for the lungs:
+    - find the centers of mass of each contour.
+    - find the bounding boxes of each contour.
+2. Use them as positive prompts:
+    - "I'm looking for what this points mark."
+    - "I'm looking for what's inside this box."
 3. Use the center of the image as negative prompt ("This is the background").
 4. Use SAM to segment the image using the provided prompts.
 """
