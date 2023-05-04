@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="process_image: slice" type="PythonConfigurationType" factoryName="Python" folderName="process_image">
+  <configuration default="false" name="process_image: all (radiopaedia)" type="PythonConfigurationType" factoryName="Python" folderName="process_image">
     <module name="sam" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/process_image.py" />
-    <option name="PARAMETERS" value="--image_file_path working_data/image_coronacases_001.npy --masks_file_path working_data/masks_coronacases_001.npy --slice 98 --debug" />
+    <option name="PARAMETERS" value="--image_file_path working_data/image_radiopaedia_14_85914_0.npy --masks_file_path working_data/image_radiopaedia_14_85914_0.npy --debug" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
