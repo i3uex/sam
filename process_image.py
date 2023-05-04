@@ -370,6 +370,7 @@ def process_image_slice(sam_predictor: SamPredictor,
 
     if slice_masks.contours is not None:
         sam_predictor.set_image(image_slice)
+        # SAM expects x, y point coordinates instead of row, column (y, x)
         mask, score, logits = sam_predictor.predict(
             point_coords=np.flip(slice_masks.contours_centers, axis=1),
             point_labels=slice_masks.contours_centers_labels,
