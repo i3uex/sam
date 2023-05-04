@@ -62,17 +62,17 @@ class SliceMasks:
                      f'labeled_image={labeled_image.shape})')
 
         self.labeled_image = labeled_image
-        self.process_points()
+        self.process_labeled_image()
 
-    def process_points(self):
+    def process_labeled_image(self):
         """
-        If the points provided to the class contains other values than 0, find
-        the contours. For each contour found, find their masks, their centers
-        and their bounding boxes.
+        If the labeled image provided to the class contains other values than
+        0, find the contours. For each contour found, find their masks, their
+        centers and their bounding boxes.
         """
 
-        logger.info('Process points')
-        logger.debug('__process_points()')
+        logger.info('Process labeled image')
+        logger.debug('process_labeled_image()')
 
         self.labels = np.unique(self.labeled_image)
         if len(self.labels) > 1:
