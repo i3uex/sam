@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Use bounding box to aid prediction.
 - Notebook explaining coordinates conventions.
 - Class to manage multiple masks.
 - Summary generation process when multiple images are processed.

@@ -77,9 +77,8 @@ def show_points(coords, labels, ax, marker_size=375):
 # TODO: add documentation to this method, taken from SAM's notebooks.
 # https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb
 def show_box(box, ax):
-    row_min, column_min, row_max, column_max = box
-    x0, y0 = column_min, row_min
-    w, h = column_max - column_min, row_max - row_min
+    x0, y0 = box[0], box[1]
+    w, h = box[2] - box[0], box[3] - box[1]
     ax.add_patch(plt.Rectangle((x0, y0), w, h, edgecolor='green', facecolor=(0, 0, 0, 0), lw=2))
 
 
@@ -370,11 +369,10 @@ def process_image_slice(sam_predictor: SamPredictor,
 
     if slice_masks.contours is not None:
         sam_predictor.set_image(image_slice)
-        # SAM expects x, y point coordinates instead of row, column (y, x)
         mask, score, logits = sam_predictor.predict(
-            point_coords=np.flip(slice_masks.contours_centers, axis=1),
+            point_coords=slice_masks.get_contours_centers_for_sam(),
             point_labels=slice_masks.contours_centers_labels,
-            # box=slice_masks.contours_bounding_boxes[0],
+            box=slice_masks.get_contours_bounding_box_for_sam(),
             multimask_output=False)
 
         # Compare original and predicted lung masks
@@ -401,6 +399,16 @@ def process_image_slice(sam_predictor: SamPredictor,
                     }
                 })
 
+            bounding_box = slice_masks.get_contours_bounding_box_for_sam()
+            prompts.update({
+                'bounding_box': {
+                    'row_min': int(bounding_box[1]),
+                    'colum_min': int(bounding_box[0]),
+                    'row_max': int(bounding_box[3]),
+                    'column_max': int(bounding_box[2])
+                }
+            })
+
             data = dict(
                 image=debug.image_file_path.name,
                 masks=debug.masks_file_path.name,
@@ -422,8 +430,7 @@ def process_image_slice(sam_predictor: SamPredictor,
                 coords=slice_masks.contours_centers,
                 labels=slice_masks.contours_centers_labels,
                 ax=plt.gca())
-            for contours_bounding_box in slice_masks.contours_bounding_boxes:
-                show_box(box=contours_bounding_box, ax=plt.gca())
+            show_box(box=slice_masks.get_contours_bounding_box_for_sam(), ax=plt.gca())
             plt.title(f"Score: {score[0]:.3f}", fontsize=18)
             plt.axis('off')
 

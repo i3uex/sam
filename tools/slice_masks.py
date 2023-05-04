@@ -397,3 +397,14 @@ class SliceMasks:
         column_max = np.max(contour[:, 1])
 
         return [row_min, column_min, row_max, column_max]
+
+    def get_contours_centers_for_sam(self):
+        return np.flip(self.contours_centers, axis=1)
+
+    def get_contours_bounding_box_for_sam(self):
+        row_min = np.min(self.contours_bounding_boxes[:, 0])
+        column_min = np.min(self.contours_bounding_boxes[:, 1])
+        row_max = np.max(self.contours_bounding_boxes[:, 2])
+        column_max = np.max(self.contours_bounding_boxes[:, 3])
+
+        return np.array([column_min, row_min, column_max, row_max])
