@@ -90,7 +90,7 @@ class SliceMasks:
         logger.debug('find_contours()')
 
         if self.labels.size > 1:
-            logger.info(f'Finding contours for {self.labels.size} point values.')
+            logger.info(f'Finding contours for {self.labels.size} labels.')
             self.contours = []
             self.contours_labels = []
             for mask_index in self.labels:
