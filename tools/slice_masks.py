@@ -34,25 +34,32 @@ class SliceMasks:
     labeled_image: np.array = None
     labels: np.array = None
 
-    contours: list = None  # coordinates of the polygon surrounding an object
-    contours_labels: list = None  # original label for the contour
-    contours_masks: list = None  # masks for the contours
-    contours_centers: np.array = None  # point inside each contour
-    contours_centers_labels: np.array = None  # labels of the points inside each contour
-    contours_bounding_boxes: np.array = None  # top left, bottom right coordinates
+    # Coordinates of the polygon surrounding each object in the masks
+    contours: list = None
+    # Original labels for the contours
+    contours_labels: list = None
+    # Masks for the contours
+    contours_masks: list = None
+    # Centered points inside each contour, and a last one marking the center of
+    # the image
+    contours_centers: np.array = None
+    # SAM's labels of the points inside each contour
+    contours_centers_labels: np.array = None
+    # Top left, bottom right coordinates
+    contours_bounding_boxes: np.array = None
 
     def __init__(self, labeled_image: np.array):
         """
-        Init Masks class instance with an array of values. The value 0 means no
-        object was present in that location. Every value greater than 0 marks a
-        different object.
+        Init Slice Masks class instance with an array of values. The value 0
+        means no object was present in that location. Every value greater than
+        0 marks a different object.
 
         :param labeled_image: array with the values of the masks.
         """
 
         logger.info('Init Masks')
         logger.debug(f'Masks.__init__('
-                     f'regions={labeled_image.shape})')
+                     f'labeled_image={labeled_image.shape})')
 
         self.labeled_image = labeled_image
         self.process_points()
