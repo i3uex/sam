@@ -62,13 +62,13 @@ def main():
     plt.style.use('grayscale')
     plt.imshow(image_slice)
 
-    for contour in slice_masks.contours:
+    for contour in slice_masks.__contours:
         plt.plot(contour[:, 0], contour[:, 1], color='green')
-    for contour_mask in slice_masks.contours_masks:
+    for contour_mask in slice_masks.__contours_masks:
         show_mask(contour_mask, plt.gca())
     show_points(
-        slice_masks.contours_centers,
-        slice_masks.contours_centers_labels,
+        slice_masks.centers,
+        slice_masks.centers_labels,
         plt.gca())
     for contours_bounding_box in slice_masks.contours_bounding_boxes:
         xs = [contours_bounding_box[0],
