@@ -22,7 +22,8 @@ IMAGE_NAMES=(
 for IMAGE_NAME in "${IMAGE_NAMES[@]}"; do
   $PYTHON $PROCESS_IMAGE_SCRIPT \
     --image_file_path $WORKING_DATA_PATH/image_"$IMAGE_NAME".npy \
-    --masks_file_path $WORKING_DATA_PATH/masks_"$IMAGE_NAME".npy
+    --masks_file_path $WORKING_DATA_PATH/masks_"$IMAGE_NAME".npy \
+    --apply_windowing
 done
 
 $PYTHON $JOIN_RESULTS_SCRIPT --results_folder_path $RESULTS_PATH
