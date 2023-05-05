@@ -104,12 +104,11 @@ class SliceMasks:
         logger.info('Get box')
         logger.debug('get_box()')
 
-        row_min = np.min(self.bounding_box[:, 0])
-        column_min = np.min(self.bounding_box[:, 1])
-        row_max = np.max(self.bounding_box[:, 2])
-        column_max = np.max(self.bounding_box[:, 3])
-
-        return np.array([column_min, row_min, column_max, row_max])
+        return np.array([
+            self.bounding_box[1],
+            self.bounding_box[0],
+            self.bounding_box[3],
+            self.bounding_box[2]])
 
     def __process_labeled_image(self):
         """
