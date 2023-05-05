@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/process_image.py" />
-    <option name="PARAMETERS" value="--image_file_path working_data/image_coronacases_008.npy --masks_file_path working_data/masks_coronacases_008.npy --slice 26 --apply_windowing --debug" />
+    <option name="PARAMETERS" value="--image_file_path working_data/image_coronacases_001.npy --masks_file_path working_data/masks_coronacases_001.npy --slice 122 --debug" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
