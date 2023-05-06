@@ -4,11 +4,9 @@ from pathlib import Path
 from typing import Tuple, Union
 
 import pandas as pd
-
-from csv_keys import *
-
 from rich import print
 
+from csv_keys import *
 from tools.argparse_helper import ArgumentParserHelper
 from tools.summarizer import Summarizer
 from tools.timestamp import Timestamp
@@ -16,6 +14,7 @@ from tools.timestamp import Timestamp
 logger = logging.getLogger(__name__)
 
 LoggingEnabled = True
+RawDataFilePattern = 'raw_data_*.csv'
 ResultsFilePattern = 'results_*.csv'
 
 
@@ -110,6 +109,7 @@ def get_most_recent_timestamped_file(
 
     return result
 
+
 def join_results(results_folder_path: Path) -> Union[Path, None]:
     """
     Given a folder, gets every folder inside it with a name that follows a
@@ -146,14 +146,18 @@ def join_results(results_folder_path: Path) -> Union[Path, None]:
 
     joint_results = []
     for result_folder_path in result_folder_paths:
+        raw_data_file_path = get_most_recent_timestamped_file(
+            result_folder_path, RawDataFilePattern)
         results_file_path = get_most_recent_timestamped_file(
             result_folder_path, ResultsFilePattern)
 
-        df = pd.read_csv(results_file_path)
+        df_raw_data = pd.read_csv(raw_data_file_path)
+        df_results = pd.read_csv(results_file_path)
         result = {
-            ImageKey: result_folder_path.name
+            ImageKey: result_folder_path.name,
+            SlicesKey: len(df_raw_data)
         }
-        for index, row in df.iterrows():
+        for index, row in df_results.iterrows():
             metric = row[MetricKey]
             result[f'{metric}_{MinKey}'] = row[MinKey]
             result[f'{metric}_{MaxKey}'] = row[MaxKey]
@@ -166,7 +170,8 @@ def join_results(results_folder_path: Path) -> Union[Path, None]:
     if len(joint_results) > 0:
         # Include aggregate values in the last row
         averages = {
-            ImageKey: 'average'
+            ImageKey: 'average',
+            SlicesKey: df_joint_results[SlicesKey].mean()
         }
         for metric_key in MetricKeys:
             key = f'{metric_key}_{MinKey}'

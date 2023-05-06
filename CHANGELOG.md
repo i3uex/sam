@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Include number of slices in summary.
 - Parameter to choose if the centers of the masks or center of the contours will be used as positive prompts.
 - Bounding box are now optional.
 - Use bounding box to aid prediction.
