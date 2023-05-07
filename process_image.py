@@ -709,8 +709,8 @@ def main():
                                      use_masks_contours=use_masks_contours,
                                      use_bounding_box=use_bounding_box,
                                      debug=debug)
-        print(f'IoU: {result[IoUKey]:.3f}')
-        print(f'Dice: {result[DiceKey]:.3f}')
+        print(f'IoU: {result[IoUKey]:.4f}')
+        print(f'Dice: {result[DiceKey]:.4f}')
 
     print(summarizer.notification_message)
 
