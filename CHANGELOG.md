@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - Script **process_images.sh** now allows for windowing operation to be selected.
+- Script **process_images.sh** now includes all the images in Zenodo's dataset.
 - Windowing is now optional.
 - Scripts to save NIfTI images as NumPy arrays now swap axis, so we follow the rows, columns coordinates convention.
 - Parametrize shell scripts.

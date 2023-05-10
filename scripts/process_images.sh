@@ -19,6 +19,16 @@ IMAGE_ITEMS=(
   "coronacases_008 true"
   "coronacases_009 true"
   "coronacases_010 true"
+  "radiopaedia_4_85506_1 false"
+  "radiopaedia_7_85703_0 false"
+  "radiopaedia_10_85902_1 false"
+  "radiopaedia_10_85902_3 false"
+  "radiopaedia_14_85914_0 false"
+  "radiopaedia_27_86410_0 false"
+  "radiopaedia_29_86490_1 false"
+  "radiopaedia_29_86491_1 false"
+  "radiopaedia_36_86526_0 false"
+  "radiopaedia_40_86625_0 false"
 )
 
 for IMAGE_ITEM in "${IMAGE_ITEMS[@]}"; do
