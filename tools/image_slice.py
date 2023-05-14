@@ -529,7 +529,8 @@ class ImageSlice:
         if sum(mask_segments_lengths) > 0:
             # Get the max segment and its center
             mask_segment_max = mask_segments[mask_segments_lengths_arg_max]
-            mask_segment_max_center = int(np.mean(mask_segment_max))
+            mask_segment_max_center_index = len(mask_segment_max) // 2
+            mask_segment_max_center = int(mask_segment_max[mask_segment_max_center_index])
 
             new_point_location = PointLocation(mask_segments_lengths_arg_max)
             if new_point_location == PointLocation.Left:
