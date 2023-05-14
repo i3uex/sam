@@ -32,6 +32,7 @@ class Slice:
     Third, the bounding boxes for each contour.
     """
 
+    points: np.array = None
     labeled_points: np.array = None
     use_masks_contours: bool = False
 
@@ -52,12 +53,13 @@ class Slice:
     # Masks for the contours
     __contours_masks: list = None
 
-    def __init__(self, labeled_points: np.array, use_masks_contours: bool):
+    def __init__(self, points: np.array, labeled_points: np.array, use_masks_contours: bool):
         """
         Init Slice Masks class instance with an array of values. The value 0
         means no object was present in that location. Every value greater than
         0 marks a different object.
 
+        :param points: array with the values of slice.
         :param labeled_points: array with the values of the masks.
         :param use_masks_contours: if True, get positive prompts from contours.
         Else, get them from the mask. This means that if a given mask have more
@@ -67,9 +69,11 @@ class Slice:
 
         logger.info('Init Masks')
         logger.debug(f'Masks.__init__('
+                     f'points={points.shape}, '
                      f'labeled_points={labeled_points.shape}, '
                      f'use_masks_contours={use_masks_contours})')
 
+        self.points = points
         self.labeled_points = labeled_points
         self.use_masks_contours = use_masks_contours
 
