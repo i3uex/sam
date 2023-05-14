@@ -1,8 +1,8 @@
 SliceNumberKey = 'slice'
 MetricKey = 'metric'
-IoUKey = 'iou'
+JaccardKey = 'jaccard'
 DiceKey = 'dice'
-MetricKeys = [IoUKey, DiceKey]
+MetricKeys = [JaccardKey, DiceKey]
 MinKey = 'min'
 MaxKey = 'max'
 AverageKey = 'avg'

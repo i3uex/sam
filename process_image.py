@@ -191,13 +191,12 @@ def compare_original_and_predicted_masks(
 ) -> Tuple[float, float]:
     """
     Compares the original segmentation mask with the one predicted. Returns a
-    tuple with the Jaccard index (IoU) and the Dice coefficient.
+    tuple with the Jaccard index and the Dice coefficient.
 
     :param original_mask: original segmentation mask.
     :param predicted_mask: predicted segmentation mask.
 
-    :return: Jaccard index (IoU) and the Dice coefficient of the masks
-    provided.
+    :return: Jaccard index and the Dice coefficient of the masks provided.
     """
 
     logger.info('Compare original and predicted masks')
@@ -211,10 +210,10 @@ def compare_original_and_predicted_masks(
     intersection = original_mask_as_bool * predicted_mask_transformed
     union = (original_mask_as_bool + predicted_mask_transformed) > 0
 
-    iou = intersection.sum() / float(union.sum())
+    jaccard = intersection.sum() / float(union.sum())
     dice = intersection.sum() * 2 / (original_mask.sum() + predicted_mask.sum())
 
-    return iou, dice
+    return jaccard, dice
 
 
 def save_results(output_path: Path, list_of_dictionaries: list) -> Tuple[Path, Path]:
@@ -239,13 +238,13 @@ def save_results(output_path: Path, list_of_dictionaries: list) -> Tuple[Path, P
     df_raw_data = pd.DataFrame(list_of_dictionaries)
 
     # Save results
-    iou_column = df_raw_data[IoUKey]
-    iou_results = {
-        MetricKey: IoUKey,
-        MinKey: iou_column.min(),
-        MaxKey: iou_column.max(),
-        AverageKey: iou_column.mean(),
-        StandardDeviationKey: iou_column.std()
+    jaccard_column = df_raw_data[JaccardKey]
+    jaccard_results = {
+        MetricKey: JaccardKey,
+        MinKey: jaccard_column.min(),
+        MaxKey: jaccard_column.max(),
+        AverageKey: jaccard_column.mean(),
+        StandardDeviationKey: jaccard_column.std()
     }
     dice_column = df_raw_data[DiceKey]
     dice_results = {
@@ -256,7 +255,7 @@ def save_results(output_path: Path, list_of_dictionaries: list) -> Tuple[Path, P
         StandardDeviationKey: dice_column.std()
     }
 
-    results = [iou_results, dice_results]
+    results = [jaccard_results, dice_results]
 
     results_csv_output_path = output_path / Path(f'results_{timestamp}.csv')
     df_results = pd.DataFrame(results)
@@ -290,7 +289,8 @@ def process_image_slice(sam_predictor: SamPredictor,
     :param debug: instance of Debug class.
 
     :return: a dictionary with the number of the slice been processed and the
-    IoU between the ground truth and the prediction masks.
+    Jaccard index and Dice score between the ground truth and the prediction
+    masks.
     """
 
     logger.info('Process image slice')
@@ -315,7 +315,7 @@ def process_image_slice(sam_predictor: SamPredictor,
 
     mask = []
     score = []
-    iou = None
+    jaccard = None
     dice = None
 
     if image_slice.labels.size > 1:
@@ -334,8 +334,7 @@ def process_image_slice(sam_predictor: SamPredictor,
             multimask_output=False)
 
         # Compare original and predicted lung masks
-        # TODO: rename iou as jaccard
-        iou, dice = compare_original_and_predicted_masks(
+        jaccard, dice = compare_original_and_predicted_masks(
             original_mask=labeled_points, predicted_mask=mask)
     else:
         logger.info("There are no masks for the current slice")
@@ -401,7 +400,7 @@ def process_image_slice(sam_predictor: SamPredictor,
 
     result = {
         SliceNumberKey: slice_number,
-        IoUKey: iou,
+        JaccardKey: jaccard,
         DiceKey: dice
     }
 
@@ -653,8 +652,8 @@ def main():
                                      use_masks_contours=use_masks_contours,
                                      use_bounding_box=use_bounding_box,
                                      debug=debug)
-        print(f'IoU: {result[IoUKey]:.4f}')
-        print(f'Dice: {result[DiceKey]:.4f}')
+        print(f'Jaccard index: {result[JaccardKey]:.4f}')
+        print(f'Dice score: {result[DiceKey]:.4f}')
 
     print(summarizer.notification_message)
 
