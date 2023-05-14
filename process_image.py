@@ -29,7 +29,7 @@ from csv_keys import *
 from sam_model import SamModel
 from tools.argparse_helper import ArgumentParserHelper
 from tools.debug import Debug
-from tools.slice import Slice
+from tools.image_slice import ImageSlice
 from tools.summarizer import Summarizer
 from tools.timestamp import Timestamp
 
@@ -39,10 +39,6 @@ LoggingEnabled = True
 
 DatasetPath = Path('datasets/zenodo')
 DebugFolderPath = Path('debug')
-
-# Windowing settings
-WindowWidth = 1500
-WindowLevel = -650
 
 
 # TODO: add documentation to this method, taken from SAM's notebooks.
@@ -80,54 +76,6 @@ def show_box(box, ax):
     x0, y0 = box[0], box[1]
     w, h = box[2] - box[0], box[3] - box[1]
     ax.add_patch(plt.Rectangle((x0, y0), w, h, edgecolor='green', facecolor=(0, 0, 0, 0), lw=2))
-
-
-# TODO: use this method only when needed, this is, only if the image is not
-#   greyscale already.
-# TODO: improve naming.
-# TODO: create a class for the images?
-# TODO: create a class for the slices?
-def to_greyscale(image: np.ndarray) -> np.ndarray:
-    """
-    Normalice slice values, so they are in the range 0 to 255, this is,
-    greyscale.
-
-    :param image: slice of the CT image to greyscale.
-
-    :return: slice of the CT image in greyscale.
-    """
-
-    logger.info('Apply windowing to CT image slice')
-    logger.debug(f'windowing('
-                 f'image={image.shape})')
-
-    greyscale_image = (image - image.min()) / (image.max() - image.min()) * 255
-    return greyscale_image
-
-
-# TODO: improve naming.
-# TODO: pass windowing parameters instead of using global values.
-# TODO: create a class for the images?
-# TODO: create a class for the slices?
-def windowing(image: np.ndarray) -> np.ndarray:
-    """
-    Use windowing to improve image contrast, focusing only in the range of
-    values of interest in the slice.
-
-    :param image: slice of the CT image to window.
-
-    :return: windowed slice of the CT image.
-    """
-
-    logger.info('Apply windowing to CT image slice')
-    logger.debug(f'windowing('
-                 f'image={image.shape})')
-
-    windowed_image = image[:, :].clip(
-        WindowLevel - WindowWidth // 2,
-        WindowLevel + WindowWidth // 2)
-
-    return windowed_image
 
 
 def get_sam_predictor(sam_model: SamModel) -> SamPredictor:
@@ -188,7 +136,8 @@ def load_masks(masks_file_path: Path) -> np.array:
     return masks
 
 
-def load_image_slice(image: np.array, slice_number: int, apply_windowing: bool) -> np.array:
+# TODO: these two methods could be the same.
+def load_image_slice(image: np.array, slice_number: int) -> np.array:
     """
     Return a slice from a CT image, given its position. The slice is windowed
     to improve its contrast if needed, converted to greyscale, and expanded to
@@ -196,7 +145,6 @@ def load_image_slice(image: np.array, slice_number: int, apply_windowing: bool) 
 
     :param image: CT image from which to get the slice.
     :param slice_number: slice number to get from the image.
-    :param apply_windowing: if True, apply windowing to the image.
 
     :return: slice from a CT image.
     """
@@ -204,19 +152,12 @@ def load_image_slice(image: np.array, slice_number: int, apply_windowing: bool) 
     logger.info('Load a slice from a CT image')
     logger.debug(f'load_image_slice('
                  f'image={image.shape}, '
-                 f'slice_number={slice_number}, '
-                 f'apply_windowing={apply_windowing})')
+                 f'slice_number={slice_number})')
 
     assert 0 <= slice_number < image.shape[-1]
     logger.info("Requested slice exists.")
 
     image_slice = image[:, :, slice_number]
-
-    if apply_windowing:
-        image_slice = windowing(image_slice)
-    image_slice = to_greyscale(image_slice)
-    image_slice = image_slice.astype(np.uint8)
-    image_slice = np.stack((image_slice,) * 3, axis=-1)
 
     return image_slice
 
@@ -363,12 +304,13 @@ def process_image_slice(sam_predictor: SamPredictor,
                  f'use_bounding_box={use_bounding_box}, '
                  f'debug={debug.enabled})')
 
-    image_slice = load_image_slice(image=image, slice_number=slice_number, apply_windowing=apply_windowing)
-    masks_slice = load_masks_slice(masks=masks, slice_number=slice_number)
+    points = load_image_slice(image=image, slice_number=slice_number)
+    labeled_points = load_masks_slice(masks=masks, slice_number=slice_number)
 
-    slice_masks = Slice(
-        points=image_slice,
-        labeled_points=masks_slice,
+    image_slice = ImageSlice(
+        points=points,
+        labeled_points=labeled_points,
+        apply_windowing=apply_windowing,
         use_masks_contours=use_masks_contours)
 
     mask = []
@@ -376,15 +318,15 @@ def process_image_slice(sam_predictor: SamPredictor,
     iou = None
     dice = None
 
-    if slice_masks.labels.size > 1:
-        point_coords = slice_masks.get_point_coordinates()
-        point_labels = slice_masks.centers_labels
+    if image_slice.labels.size > 1:
+        point_coords = image_slice.get_point_coordinates()
+        point_labels = image_slice.centers_labels
         if use_bounding_box:
-            box = slice_masks.get_box()
+            box = image_slice.get_box()
         else:
             box = None
 
-        sam_predictor.set_image(image_slice)
+        sam_predictor.set_image(image_slice.processed_points)
         mask, score, logits = sam_predictor.predict(
             point_coords=point_coords,
             point_labels=point_labels,
@@ -392,21 +334,22 @@ def process_image_slice(sam_predictor: SamPredictor,
             multimask_output=False)
 
         # Compare original and predicted lung masks
+        # TODO: rename iou as jaccard
         iou, dice = compare_original_and_predicted_masks(
-            original_mask=masks_slice, predicted_mask=mask)
+            original_mask=labeled_points, predicted_mask=mask)
     else:
         logger.info("There are no masks for the current slice")
 
     if debug.enabled:
-        if slice_masks.labels.size > 1:
+        if image_slice.labels.size > 1:
             debug.set_slice_number(slice_number=slice_number)
 
             # Save SAM's prompt to YML
             prompts = dict()
-            for index, contour_center in enumerate(slice_masks.centers):
+            for index, contour_center in enumerate(image_slice.centers):
                 row = int(contour_center[0])
                 column = int(contour_center[1])
-                label = int(slice_masks.centers_labels[index])
+                label = int(image_slice.centers_labels[index])
                 prompts.update({
                     index: {
                         'row': row,
@@ -416,7 +359,7 @@ def process_image_slice(sam_predictor: SamPredictor,
                 })
 
             if use_bounding_box:
-                bounding_box = slice_masks.get_box()
+                bounding_box = image_slice.get_box()
                 prompts.update({
                     'bounding_box': {
                         'row_min': int(bounding_box[1]),
@@ -439,16 +382,16 @@ def process_image_slice(sam_predictor: SamPredictor,
 
             # Save SAM segmentation
             figure = plt.figure(figsize=(10, 10))
-            plt.imshow(image_slice)
+            plt.imshow(image_slice.processed_points)
             show_mask(mask, plt.gca())
-            for mask_contour in slice_masks.contours:
+            for mask_contour in image_slice.contours:
                 plt.plot(mask_contour[:, 1], mask_contour[:, 0], color='green')
             show_points(
-                coords=slice_masks.centers,
-                labels=slice_masks.centers_labels,
+                coords=image_slice.centers,
+                labels=image_slice.centers_labels,
                 ax=plt.gca())
             if use_bounding_box:
-                show_box(box=slice_masks.get_box(), ax=plt.gca())
+                show_box(box=image_slice.get_box(), ax=plt.gca())
             plt.title(f"Score: {score[0]:.3f}", fontsize=18)
             plt.axis('off')
 

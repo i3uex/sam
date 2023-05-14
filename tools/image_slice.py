@@ -13,7 +13,7 @@ from tools.point_location import PointLocation
 logger = logging.getLogger(__name__)
 
 
-class Slice:
+class ImageSlice:
     """
     Process a NumPy array containing a series of masks over a CT slice.
 
@@ -32,9 +32,17 @@ class Slice:
     Third, the bounding boxes for each contour.
     """
 
+    # Windowing settings
+    __window_level = -650
+    __window_width = 1500
+
     points: np.array = None
     labeled_points: np.array = None
     use_masks_contours: bool = False
+    apply_windowing: bool = False
+
+    # Slice points, after being processed. At first, identical to the original
+    processed_points: np.array = None
 
     labels: np.array = None
 
@@ -53,7 +61,13 @@ class Slice:
     # Masks for the contours
     __contours_masks: list = None
 
-    def __init__(self, points: np.array, labeled_points: np.array, use_masks_contours: bool):
+    def __init__(
+            self,
+            points: np.array,
+            labeled_points: np.array,
+            apply_windowing: bool,
+            use_masks_contours: bool
+    ):
         """
         Init Slice Masks class instance with an array of values. The value 0
         means no object was present in that location. Every value greater than
@@ -61,6 +75,7 @@ class Slice:
 
         :param points: array with the values of slice.
         :param labeled_points: array with the values of the masks.
+        :param apply_windowing: if True, apply windowing to the slice's points.
         :param use_masks_contours: if True, get positive prompts from contours.
         Else, get them from the mask. This means that if a given mask have more
         than one contour, the number of positive prompts will be greater than
@@ -71,14 +86,66 @@ class Slice:
         logger.debug(f'Masks.__init__('
                      f'points={points.shape}, '
                      f'labeled_points={labeled_points.shape}, '
+                     f'apply_windowing={apply_windowing}, '
                      f'use_masks_contours={use_masks_contours})')
 
         self.points = points
         self.labeled_points = labeled_points
+        self.apply_windowing = apply_windowing
         self.use_masks_contours = use_masks_contours
 
+        self.__process_points()
         self.__process_labeled_points()
 
+    # region Process slice points
+
+    def __process_points(self):
+        """
+        Process the slice points. Create a copy of the original points. If
+        windowing is requested, perform it. Then, convert the points to
+        greyscale. Then, change the type to int. Last, copy these values so
+        the processed slice has three channels.
+        """
+
+        logger.info('Process slice points')
+        logger.debug('__process_points()')
+
+        self.processed_points = np.copy(self.points)  # this, to __process_points
+
+        if self.apply_windowing:
+            self.__apply_windowing()
+        self.__to_greyscale()
+        self.processed_points = self.processed_points.astype(np.uint8)
+        self.processed_points = np.stack((self.processed_points,) * 3, axis=-1)
+
+    def __apply_windowing(self):
+        """
+        Use windowing to improve image contrast, focusing only in the range of
+        values of interest in the slice. This operation only uses and affects
+        the property `processed_points`.
+        """
+
+        logger.info('Apply windowing to CT image slice')
+        logger.debug('__apply_windowing()')
+
+        self.processed_points = self.processed_points[:, :].clip(
+            self.__window_level - self.__window_width // 2,
+            self.__window_level + self.__window_width // 2)
+
+    def __to_greyscale(self):
+        """
+        Normalice slice values, so they are in the range 0 to 255, this is,
+        greyscale. This operation only uses and affects the property
+        `processed_points`.
+        """
+
+        logger.info('Convert slice points to greyscale')
+        logger.debug('to_greyscale()')
+
+        self.processed_points = (self.processed_points - self.processed_points.min()) / (
+                self.processed_points.max() - self.processed_points.min()) * 255
+
+    # endregion
     def get_point_coordinates(self) -> np.array:
         """
         Change the coordinates of each center found to match what SAM expects.
@@ -469,12 +536,12 @@ class Slice:
                 raise NotImplementedError
 
             # Center the new point inside the mask's region.
-            new_point_centered = Slice.__center_point_in_mask(mask, new_point)
+            new_point_centered = ImageSlice.__center_point_in_mask(mask, new_point)
         else:
             logger.info('We have not found an intersection with the mask')
             mask_points = np.where(mask == True)
             random_mask_point = random.randrange(len(mask_points[0]))
             new_point = mask_points[0][random_mask_point], mask_points[1][random_mask_point]
-            new_point_centered = Slice.__center_point_in_mask(mask, new_point)
+            new_point_centered = ImageSlice.__center_point_in_mask(mask, new_point)
 
         return new_point_centered
