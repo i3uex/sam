@@ -367,7 +367,7 @@ def process_image_slice(sam_predictor: SamPredictor,
     masks_slice = load_masks_slice(masks=masks, slice_number=slice_number)
 
     slice_masks = SliceMasks(
-        labeled_image=masks_slice,
+        labeled_points=masks_slice,
         use_masks_contours=use_masks_contours)
 
     mask = []

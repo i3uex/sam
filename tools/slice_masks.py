@@ -32,7 +32,7 @@ class SliceMasks:
     Third, the bounding boxes for each contour.
     """
 
-    labeled_image: np.array = None
+    labeled_points: np.array = None
     use_masks_contours: bool = False
 
     labels: np.array = None
@@ -52,13 +52,13 @@ class SliceMasks:
     # Masks for the contours
     __contours_masks: list = None
 
-    def __init__(self, labeled_image: np.array, use_masks_contours: bool):
+    def __init__(self, labeled_points: np.array, use_masks_contours: bool):
         """
         Init Slice Masks class instance with an array of values. The value 0
         means no object was present in that location. Every value greater than
         0 marks a different object.
 
-        :param labeled_image: array with the values of the masks.
+        :param labeled_points: array with the values of the masks.
         :param use_masks_contours: if True, get positive prompts from contours.
         Else, get them from the mask. This means that if a given mask have more
         than one contour, the number of positive prompts will be greater than
@@ -67,13 +67,13 @@ class SliceMasks:
 
         logger.info('Init Masks')
         logger.debug(f'Masks.__init__('
-                     f'labeled_image={labeled_image.shape}, '
+                     f'labeled_points={labeled_points.shape}, '
                      f'use_masks_contours={use_masks_contours})')
 
-        self.labeled_image = labeled_image
+        self.labeled_points = labeled_points
         self.use_masks_contours = use_masks_contours
 
-        self.__process_labeled_image()
+        self.__process_labeled_points()
 
     def get_point_coordinates(self) -> np.array:
         """
@@ -110,7 +110,7 @@ class SliceMasks:
             self.bounding_box[3],
             self.bounding_box[2]])
 
-    def __process_labeled_image(self):
+    def __process_labeled_points(self):
         """
         If the labeled image provided to the class contains other values than
         0, find the centers of the objects of interest.
@@ -123,9 +123,9 @@ class SliceMasks:
         """
 
         logger.info('Process labeled image')
-        logger.debug('process_labeled_image()')
+        logger.debug('__process_labeled_points()')
 
-        self.labels = np.unique(self.labeled_image)
+        self.labels = np.unique(self.labeled_points)
         if self.labels.size > 1:
             self.__find_contours()
             if not self.use_masks_contours:
@@ -149,7 +149,7 @@ class SliceMasks:
             masks_centers = []
             for label in self.labels:
                 if label != 0:
-                    mask = self.labeled_image == label
+                    mask = self.labeled_points == label
                     mask_center = self.__find_mask_center(mask, label)
                     masks_centers.append(mask_center)
             self.__add_image_center(masks_centers)
@@ -171,7 +171,7 @@ class SliceMasks:
             self.__contours_labels = []
             for label in self.labels:
                 if label != 0:
-                    mask = self.labeled_image == label
+                    mask = self.labeled_points == label
                     # Avoid one contour inside another
                     mask_filled = scipy.ndimage.binary_fill_holes(mask)
                     mask_contours = measure.find_contours(mask_filled)
@@ -196,7 +196,7 @@ class SliceMasks:
             self.__contours_masks = []
             for contour in self.contours:
                 contour_mask = np.zeros(
-                    (self.labeled_image.shape[0], self.labeled_image.shape[1]), 'uint8')
+                    (self.labeled_points.shape[0], self.labeled_points.shape[1]), 'uint8')
                 rows, columns = polygon(
                     contour[:, 0], contour[:, 1], contour_mask.shape)
                 contour_mask[rows, columns] = 1
@@ -239,8 +239,8 @@ class SliceMasks:
                      f'centers={len(centers)})')
 
         centers.append([
-            self.labeled_image.shape[0] // 2,
-            self.labeled_image.shape[1] // 2
+            self.labeled_points.shape[0] // 2,
+            self.labeled_points.shape[1] // 2
         ])
 
     def __add_centers_labels(self):
@@ -265,7 +265,7 @@ class SliceMasks:
 
         if self.labels.size > 1:
             logger.info(f'Finding the bounding box around every mask.')
-            mask = np.where(self.labeled_image > 0, 1, self.labeled_image)
+            mask = np.where(self.labeled_points > 0, 1, self.labeled_points)
             mask = mask.astype(np.int16)
             regions_properties = regionprops(mask)
             region_properties = regions_properties[0]
@@ -291,7 +291,7 @@ class SliceMasks:
                      f'mask={mask.shape}, '
                      f'contour_label={contour_label})')
 
-        original_mask = self.labeled_image == contour_label
+        original_mask = self.labeled_points == contour_label
         center_of_mass_row, center_of_mass_column = scipy.ndimage.center_of_mass(mask)
         center_of_mass = int(center_of_mass_row), int(center_of_mass_column)
         if self.__is_point_inside_mask(original_mask, center_of_mass):
