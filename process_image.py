@@ -311,6 +311,7 @@ def process_image_slice(sam_predictor: SamPredictor,
         points=points,
         labeled_points=labeled_points,
         apply_windowing=apply_windowing,
+        use_bounding_box=use_bounding_box,
         use_masks_contours=use_masks_contours)
 
     mask = []

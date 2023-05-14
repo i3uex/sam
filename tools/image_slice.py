@@ -39,6 +39,7 @@ class ImageSlice:
     points: np.array = None
     labeled_points: np.array = None
     apply_windowing: bool = False
+    use_bounding_box: bool = False
     use_masks_contours: bool = False
 
     # Slice points, after being processed. At first, identical to the original
@@ -66,6 +67,7 @@ class ImageSlice:
             points: np.array,
             labeled_points: np.array,
             apply_windowing: bool,
+            use_bounding_box: bool,
             use_masks_contours: bool
     ):
         """
@@ -76,6 +78,8 @@ class ImageSlice:
         :param points: array with the values of slice.
         :param labeled_points: array with the values of the masks.
         :param apply_windowing: if True, apply windowing to the slice's points.
+        :param use_bounding_box: if True, use the bounding box to calculate the
+        negative prompt.
         :param use_masks_contours: if True, get positive prompts from contours.
         Else, get them from the mask. This means that if a given mask have more
         than one contour, the number of positive prompts will be greater than
@@ -87,11 +91,13 @@ class ImageSlice:
                      f'points={points.shape}, '
                      f'labeled_points={labeled_points.shape}, '
                      f'apply_windowing={apply_windowing}, '
+                     f'use_bounding_box={use_bounding_box}, '
                      f'use_masks_contours={use_masks_contours})')
 
         self.points = points
         self.labeled_points = labeled_points
         self.apply_windowing = apply_windowing
+        self.use_bounding_box = use_bounding_box
         self.use_masks_contours = use_masks_contours
 
         self.__process_points()
@@ -146,6 +152,7 @@ class ImageSlice:
                 self.processed_points.max() - self.processed_points.min()) * 255
 
     # endregion
+
     def get_point_coordinates(self) -> np.array:
         """
         Change the coordinates of each center found to match what SAM expects.
@@ -204,8 +211,9 @@ class ImageSlice:
             else:
                 self.__find_contours_masks()
                 self.__find_contours_centers()
-            self.__add_centers_labels()
             self.__find_bounding_box()
+            self.__add_negative_prompt()
+            self.__add_centers_labels()
 
     def __find_masks_centers(self):
         """
@@ -223,7 +231,6 @@ class ImageSlice:
                     mask = self.labeled_points == label
                     mask_center = self.__find_mask_center(mask, label)
                     masks_centers.append(mask_center)
-            self.__add_image_center(masks_centers)
             self.centers = np.array(masks_centers).astype(np.int16)
         else:
             logger.info('There are no masks to work with.')
@@ -292,27 +299,32 @@ class ImageSlice:
                 contour_label = self.__contours_labels[index]
                 contour_center = self.__find_mask_center(contour_mask, contour_label)
                 contours_centers.append(contour_center)
-            self.__add_image_center(contours_centers)
             self.centers = np.array(contours_centers).astype(np.int16)
         else:
             logger.info('There are no contours masks to work with.')
 
-    def __add_image_center(self, centers: list):
+    def __add_negative_prompt(self):
         """
-        Add an extra point to a list of centers, with the coordinates of the
-        center of the image.
-
-        :param centers: list of centers to modify.
+        Add an extra point to a list of centers, marking what should not be
+        segmented.
         """
 
-        logger.info('Add image center to list')
-        logger.debug(f'__add_image_center('
-                     f'centers={len(centers)})')
+        logger.info('Add negative prompt to list')
+        logger.debug('__add_negative_prompt()')
 
-        centers.append([
-            self.labeled_points.shape[0] // 2,
-            self.labeled_points.shape[1] // 2
-        ])
+        if not self.use_bounding_box:
+            logger.info('Add the center of the slice')
+            self.centers.append([
+                self.labeled_points.shape[0] // 2,
+                self.labeled_points.shape[1] // 2
+            ])
+        else:
+            logger.info('Add the center of the bounding box')
+            bounding_box_center = [
+                self.bounding_box[0] + (self.bounding_box[2] - self.bounding_box[0]) // 2,
+                self.bounding_box[1] + (self.bounding_box[3] - self.bounding_box[1]) // 2
+            ]
+            self.centers = np.append(self.centers, [bounding_box_center], axis=0)
 
     def __add_centers_labels(self):
         """

@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+- When using bounding boxes, the negative prompt is now its center.
 - Rename IoU as Jaccard.
 - Refactor class for the slice masks. It now also contains the image slice.
 - Script **process_images.sh** now allows for windowing operation to be selected.
