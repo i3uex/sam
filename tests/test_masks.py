@@ -4,7 +4,7 @@ from typing import Tuple
 import numpy as np
 from matplotlib import pyplot as plt
 
-from tools.slice_masks import SliceMasks
+from tools.slice import Slice
 
 data_folder_path = Path('notebooks/data')
 
@@ -55,7 +55,7 @@ def main():
     # image_slice, masks_slice = load_slice(image_number='001', slice_number='122')
     # image_slice, masks_slice = load_slice(image_number='008', slice_number='26')
 
-    slice_masks = SliceMasks(labeled_points=masks_slice)
+    slice_masks = Slice(labeled_points=masks_slice)
 
     plt.figure(figsize=(10, 10), layout='constrained')
     plt.axis('off')

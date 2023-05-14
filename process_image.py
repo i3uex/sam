@@ -29,7 +29,7 @@ from csv_keys import *
 from sam_model import SamModel
 from tools.argparse_helper import ArgumentParserHelper
 from tools.debug import Debug
-from tools.slice_masks import SliceMasks
+from tools.slice import Slice
 from tools.summarizer import Summarizer
 from tools.timestamp import Timestamp
 
@@ -366,7 +366,7 @@ def process_image_slice(sam_predictor: SamPredictor,
     image_slice = load_image_slice(image=image, slice_number=slice_number, apply_windowing=apply_windowing)
     masks_slice = load_masks_slice(masks=masks, slice_number=slice_number)
 
-    slice_masks = SliceMasks(
+    slice_masks = Slice(
         labeled_points=masks_slice,
         use_masks_contours=use_masks_contours)
 

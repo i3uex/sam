@@ -13,7 +13,7 @@ from tools.point_location import PointLocation
 logger = logging.getLogger(__name__)
 
 
-class SliceMasks:
+class Slice:
     """
     Process a NumPy array containing a series of masks over a CT slice.
 
@@ -465,12 +465,12 @@ class SliceMasks:
                 raise NotImplementedError
 
             # Center the new point inside the mask's region.
-            new_point_centered = SliceMasks.__center_point_in_mask(mask, new_point)
+            new_point_centered = Slice.__center_point_in_mask(mask, new_point)
         else:
             logger.info('We have not found an intersection with the mask')
             mask_points = np.where(mask == True)
             random_mask_point = random.randrange(len(mask_points[0]))
             new_point = mask_points[0][random_mask_point], mask_points[1][random_mask_point]
-            new_point_centered = SliceMasks.__center_point_in_mask(mask, new_point)
+            new_point_centered = Slice.__center_point_in_mask(mask, new_point)
 
         return new_point_centered
