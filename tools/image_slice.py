@@ -38,8 +38,8 @@ class ImageSlice:
 
     points: np.array = None
     labeled_points: np.array = None
-    use_masks_contours: bool = False
     apply_windowing: bool = False
+    use_masks_contours: bool = False
 
     # Slice points, after being processed. At first, identical to the original
     processed_points: np.array = None
