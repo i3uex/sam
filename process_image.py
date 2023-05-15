@@ -211,7 +211,7 @@ def compare_original_and_predicted_masks(
     union = (original_mask_as_bool + predicted_mask_transformed) > 0
 
     jaccard = intersection.sum() / float(union.sum())
-    dice = intersection.sum() * 2 / (original_mask.sum() + predicted_mask.sum())
+    dice = intersection.sum() * 2 / (original_mask_as_bool.sum() + predicted_mask.sum())
 
     return jaccard, dice
 

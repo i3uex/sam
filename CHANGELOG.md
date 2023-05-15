@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+- Dice calculation error.
 - Center of segment calculation when moving centroid inside mask.
 - Include all lung's contours in the debug data.
 - Avoid using hard-coded shape for arrays in code.
