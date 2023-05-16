@@ -75,7 +75,7 @@ def show_points(coords, labels, ax, marker_size=375):
 def show_box(box, ax):
     x0, y0 = box[0], box[1]
     w, h = box[2] - box[0], box[3] - box[1]
-    ax.add_patch(plt.Rectangle((x0, y0), w, h, edgecolor='green', facecolor=(0, 0, 0, 0), lw=2))
+    ax.add_patch(plt.Rectangle((x0, y0), w, h, edgecolor='orange', facecolor=(0, 0, 0, 0), lw=3))
 
 
 def get_sam_predictor(sam_model: SamModel) -> SamPredictor:
@@ -385,7 +385,7 @@ def process_image_slice(sam_predictor: SamPredictor,
             plt.imshow(image_slice.processed_points)
             show_mask(mask, plt.gca())
             for mask_contour in image_slice.contours:
-                plt.plot(mask_contour[:, 1], mask_contour[:, 0], color='green')
+                plt.plot(mask_contour[:, 1], mask_contour[:, 0], color='green', zorder=0)
             show_points(
                 coords=image_slice.centers,
                 labels=image_slice.centers_labels,
