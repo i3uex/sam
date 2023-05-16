@@ -39,11 +39,15 @@ for IMAGE_ITEM in "${IMAGE_ITEMS[@]}"; do
     $PYTHON $PROCESS_IMAGE_SCRIPT \
       --image_file_path $WORKING_DATA_PATH/image_"$IMAGE_NAME".npy \
       --masks_file_path $WORKING_DATA_PATH/masks_"$IMAGE_NAME".npy \
-      --apply_windowing
+      --apply_windowing \
+      --use_bounding_box \
+      --debug
   else
     $PYTHON $PROCESS_IMAGE_SCRIPT \
       --image_file_path $WORKING_DATA_PATH/image_"$IMAGE_NAME".npy \
-      --masks_file_path $WORKING_DATA_PATH/masks_"$IMAGE_NAME".npy
+      --masks_file_path $WORKING_DATA_PATH/masks_"$IMAGE_NAME".npy \
+      --use_bounding_box \
+      --debug
   fi
 done
 
