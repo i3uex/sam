@@ -42,7 +42,10 @@ class Debug:
             self.set_folder_path()
 
     def set_folder_path(self):
-        self.folder_path = self.base_folder_path / Path(self.image_file_path.stem)
+        self.folder_path = \
+            self.image_file_path.parent / \
+            self.base_folder_path / \
+            Path(self.image_file_path.stem)
         self.folder_path.mkdir(parents=True, exist_ok=True)
 
     def set_slice_number(self, slice_number: int):

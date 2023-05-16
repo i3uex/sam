@@ -1,4 +1,5 @@
 import logging
+import random
 from typing import Tuple
 
 import numpy as np
@@ -119,7 +120,7 @@ class Mask:
         # mask, we are only interested in the region adjacent to the center.
         mask_points_above = self.points[x, :y]
         mask_points_above_start = np.where(mask_points_above == False)[0][-1]
-        mask_points_above = mask_points_above[mask_points_above_start:]
+        mask_points_above = mask_points_above[mask_points_above_start + 1:]
 
         mask_points_below = self.points[x, y + 1:]
         mask_points_below_end = np.where(mask_points_below == False)[0][0]
@@ -177,23 +178,34 @@ class Mask:
                                  len(mask_segment_below)]
         mask_segments_lengths_arg_max = np.argmax(mask_segments_lengths)
 
-        # Get the max segment and its center
-        mask_segment_max = mask_segments[mask_segments_lengths_arg_max]
-        mask_segment_max_center = int(np.mean(mask_segment_max))
+        if sum(mask_segments_lengths) > 0:
+            # Get the max segment and its center
+            mask_segment_max = mask_segments[mask_segments_lengths_arg_max]
+            mask_segment_max_center = int(np.mean(mask_segment_max))
 
-        new_point_location = PointLocation(mask_segments_lengths_arg_max)
-        if new_point_location == PointLocation.Left:
-            new_point = mask_segment_max_center, y
-        elif new_point_location == PointLocation.Right:
-            new_point = mask_segment_max_center, y
-        elif new_point_location == PointLocation.Above:
-            new_point = x, mask_segment_max_center
-        elif new_point_location == PointLocation.Below:
-            new_point = x, mask_segment_max_center
+            new_point_location = PointLocation(mask_segments_lengths_arg_max)
+            if new_point_location == PointLocation.Left:
+                logger.info('We have found an intersection with the mask on the left')
+                new_point = mask_segment_max_center, y
+            elif new_point_location == PointLocation.Right:
+                logger.info('We have found an intersection with the mask on the right')
+                new_point = mask_segment_max_center, y
+            elif new_point_location == PointLocation.Above:
+                logger.info('We have found an intersection with the mask above')
+                new_point = x, mask_segment_max_center
+            elif new_point_location == PointLocation.Below:
+                logger.info('We have found an intersection with the mask below')
+                new_point = x, mask_segment_max_center
+            else:
+                raise NotImplementedError
+
+            # Center the new point inside the mask's region.
+            new_point_centered = self.__center_point(new_point)
         else:
-            raise NotImplementedError
-
-        # Center the new point inside the mask's region.
-        new_point_centered = self.__center_point(new_point)
+            logger.info('We have not found an intersection with the mask')
+            mask_points = np.where(self.points == True)
+            random_mask_point = random.randrange(len(mask_points[0]))
+            new_point = mask_points[0][random_mask_point], mask_points[1][random_mask_point]
+            new_point_centered = self.__center_point(new_point)
 
         return new_point_centered

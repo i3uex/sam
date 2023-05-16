@@ -1,3 +1,5 @@
+#!/usr/bin/bash
+
 # Create folder for the datasets, if it doesn't exist
 
 mkdir -p ./datasets
