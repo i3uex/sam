@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Notebook to show box plots.
 - Notebook to show algorithm's evolution.
 
 ## [1.1.1] - 2023-05-17
