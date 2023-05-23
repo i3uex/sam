@@ -1,5 +1,6 @@
 # To Do
 
+- Fix statistical values calculation when combining results. The values obtained for each image are correct, but when aggregating them to obtain the results for the whole datasets, the calculations are wrong.
 - Use a different marker for the prompt. A cross instead of a star could be more adequate, but try with different shapes.
 - Add center for each contour in the mask, instead of center for each mask.
   - This will improve the segmentation process, as SAM will have more information available.
