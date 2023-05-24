@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - GIF creation improvements.
 - **README.md** improvements.
 
+### Removed
+
+- Pending tasks already completed, or no longer needed.
+
 ## [1.1.2] - 2023-05-23
 
 ### Added
