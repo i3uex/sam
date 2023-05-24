@@ -15,7 +15,6 @@
   - Use two more points as prompts. Divide the contour in three parts, find the center of each one of them.
 - Update notebooks to better describe the reality of the project.
   - **image_transformations.ipynb** works, but **process_image.py** doesn't do that.
-- If all the slices are to be processed, say so in the summary.
 - Download only the needed model weights, instead of all of them.
   - Ideally, this should be done from the Python script, via a constant.
   - If `model = "default"`, the script should try to download the corresponding weights, if they were not already there.

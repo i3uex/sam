@@ -567,12 +567,14 @@ def get_summary(
     masks_slices = masks.shape[-1]
     if slice_number is not None:
         requested_slice_in_range = slice_number < image_slices
+        slice_information = f'Slice: {slice_number}'
     else:
         requested_slice_in_range = None
+        slice_information = 'Process all slices'
 
     summary = f'- Image file path: "{image_file_path}"\n' \
               f'- Masks file path: "{masks_file_path}"\n' \
-              f'- Slice: {slice_number}\n' \
+              f'- {slice_information}\n' \
               f'- Apply windowing: {apply_windowing}\n' \
               f'- Use masks contours: {use_masks_contours}\n' \
               f'- Use bounding box: {use_bounding_box}\n' \
@@ -580,8 +582,11 @@ def get_summary(
               f'- Dry run: {dry_run}\n' \
               f'- Image slices: {image_slices}\n' \
               f'- Masks slices: {masks_slices}\n' \
-              f'- Equal number of slices: {image_slices == masks_slices}\n' \
-              f'- Requested slice in range: {requested_slice_in_range}'
+              f'- Equal number of slices: {image_slices == masks_slices}'
+
+    if requested_slice_in_range is not None:
+        summary += f'\n' \
+                   f'- Requested slice in range: {requested_slice_in_range}'
 
     return summary
 
