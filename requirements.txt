@@ -13,5 +13,5 @@ scikit-image==0.20.0
 scipy==1.9.1
 # Uncomment the following requirement after installing them so that PyCharm
 # doesn't complain about a missing package
-# torch==2.0.1
+torch==2.0.1
 tqdm==4.65.0
