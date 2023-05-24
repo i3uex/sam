@@ -21,8 +21,8 @@
 
 [paper]: https://i3lab.unex.es/ ""
 [project]: https://i3lab.unex.es/project/sam-letter/ "SAM's IEEE Signal Processing Letters"
-[dataset]: https://zenodo.org/record/3757476 "COVID-19 CT Lung and Infection Segmentation Dataset"
-[bibtex]: https://i3lab.unex.es/ ""
+[dataset]: #dataset "Dataset"
+[bibtex]: #citing-this-work "Citing This Work"
 
 ## Table of Contents
 
@@ -33,7 +33,7 @@
 4. [Dataset](#dataset)
 5. [Working Data](#working-data)
 6. [Image Processing](#image-processing)
-7. [Citing this work](#citing-this-work)
+7. [Citing This Work](#citing-this-work)
 
 ## Introduction
 
@@ -119,7 +119,7 @@ Although this project has been developed with PyCharm on Windows, taking advanta
 
 ## Dataset
 
-- **Location:** [Zenodo][dataset].
+- **Location:** [Zenodo][dataset_location].
 - **Description:** 3520 slices from 20 patients.
 
 Execute the script **scripts/download_dataset.sh** from the root folder of this project to download the dataset:
@@ -127,6 +127,8 @@ Execute the script **scripts/download_dataset.sh** from the root folder of this 
 ```shell
 $ scripts/download_dataset.sh
 ```
+
+[dataset_location]: https://zenodo.org/record/3757476 "COVID-19 CT Lung and Infection Segmentation Dataset"
 
 ## Working Data
 
