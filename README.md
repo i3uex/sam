@@ -96,13 +96,11 @@ Although this project has been developed with PyCharm on Windows, taking advanta
     $ pip install git+https://github.com/facebookresearch/segment-anything.git
     ```
 
-6. Install SAM's requirements:
+6. Install this project's requirements:
 
     ```shell
-    $ pip install opencv-python pycocotools matplotlib onnxruntime onnx
+    $ pip install -r requirements.txt
     ```
-
-    > **Note:** I'm not totally sure these requirements are mandatory. They may be for the examples, but this project doesn't need OpenCV, for example.
 
 7. Execute the shell script **scripts/download_model_checkpoints.sh** to get SAM's model checkpoints:
 
@@ -114,7 +112,7 @@ Although this project has been developed with PyCharm on Windows, taking advanta
 
     > **Note:** Be careful with the EOL configuration in you IDE. Always choose LF instead of CRLF to avoid compatibility issues, as this is a multiplatform project.
 
-> **Note:** If you no longer need the Conda environment, just delete it with `conda remove -n sam --all`.
+> **Note:** If you no longer need the Conda environment, just deactivate it with `conda deactivate` and delete it with `conda remove -n sam --all`.
 
 ## Dataset
 

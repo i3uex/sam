@@ -1,9 +1,5 @@
 # To Do
 
-- Check what you need to remove this note on the **README.md** file:
-
-    > **Note:** I'm not totally sure these requirements are mandatory. They may be for the examples, but this project doesn't need OpenCV, for example.
-
 - Update the examples provided in the **README.md**.
 - Fix statistical values calculation when combining results. The values obtained for each image are correct, but when aggregating them to obtain the results for the whole datasets, the calculations are wrong.
 - Use a different marker for the prompt. A cross instead of a star could be more adequate, but try with different shapes.
