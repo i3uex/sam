@@ -2,7 +2,7 @@
 
 **[i3 lab][i3lab]** by **[QSEG][qseg]**@**[UEx][uex]**
 
-[Juan D. Gutiérrez][jdgg], [Roberto Rodriguez-Echeverria][rre], [Emilio Delgado][ed], [Miguel Ángel Suero Rodrigo][masr], and [Fernando Sánchez-Figueroa][fsf]
+[Juan D. Gutiérrez][jdg], [Roberto Rodriguez-Echeverria][rre], [Emilio Delgado][ed], Miguel Ángel Suero Rodrigo, and [Fernando Sánchez-Figueroa][fsf]
 
 [[`Paper`][paper]][[`Project`][project]][[`Dataset`][dataset]][[`BibTex`][bibtex]]
 
@@ -13,11 +13,10 @@
 [qseg]: https://quercusseg.unex.es/ "Quercus Software Engineering Group"
 [uex]: https://www.unex.es/ "Universidad de Extremadura"
 
-[jdgg]: https://i3lab.unex.es/ "Juan D. Gutiérrez"
-[rre]: https://i3lab.unex.es/ "Roberto Rodriguez-Echeverria"
-[ed]: https://i3lab.unex.es/ "Emilio Delgado"
-[masr]: https://i3lab.unex.es/ "Miguel Ángel Suero Rodrigo"
-[fsf]: https://i3lab.unex.es/ "Fernando Sánchez-Figueroa"
+[jdg]: https://i3lab.unex.es/author/juan-d.-gutierrez/ "Juan D. Gutiérrez"
+[rre]: https://i3lab.unex.es/author/roberto-rodriguez-echeverria/ "Roberto Rodriguez-Echeverria"
+[ed]: https://i3lab.unex.es/author/emilio-delgado/ "Emilio Delgado"
+[fsf]: https://i3lab.unex.es/author/fernando-sanchez-figueroa/ "Fernando Sánchez-Figueroa"
 
 [paper]: https://i3lab.unex.es/ ""
 [project]: https://i3lab.unex.es/project/sam-letter/ "SAM's IEEE Signal Processing Letters"
