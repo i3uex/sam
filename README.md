@@ -134,10 +134,12 @@ $ scripts/download_dataset.sh
 The project includes various run/debug configurations. In order to create the working data from the dataset, you need to execute **nifti_to_numpy** with the required arguments. As a reference, this is the command you have to execute from the command line to create the NumPy files from the NIfTI ones, for one image:
 
 ```shell
-$ conda run -n sam --no-capture-output python nifti_to_numpy.py --input_file_path datasets/zenodo/COVID-19-CT-Seg_20cases/coronacases_001.nii.gz --output_file_path working_data/image_coronacases_001.npy
+$ conda run -n sam --no-capture-output python nifti_to_numpy.py --input_file_path datasets/zenodo/COVID-19-CT-Seg_20cases/coronacases_001.nii.gz --output_file_path working_data/image_coronacases_001.npy --swap_axes
 
-$ conda run -n sam --no-capture-output python nifti_to_numpy.py --input_file_path datasets/zenodo/Lung_Mask/coronacases_001.nii.gz --output_file_path working_data/masks_coronacases_001.npy
+$ conda run -n sam --no-capture-output python nifti_to_numpy.py --input_file_path datasets/zenodo/Lung_Mask/coronacases_001.nii.gz --output_file_path working_data/masks_coronacases_001.npy --swap_axes
 ```
+
+The argument `--swap_axes` is included because of the coordinates convention adopted in this project.
 
 You can also run the script **nifti_to_numpy.sh** from the root of this project to create the NumPy files from all the NIfTI ones:
 
@@ -150,16 +152,16 @@ $ scripts/nifti_to_numpy.sh
 You can process just a slide from a CT image:
 
 ```shell
-$ conda run -n sam --no-capture-output python process_image.py --image_file_path working_data/image_coronacases_001.npy --masks_file_path working_data/masks_coronacases_001.npy --slice 122 --debug 
+$ conda run -n sam --no-capture-output python process_image.py --image_file_path working_data/image_coronacases_001.npy --masks_file_path working_data/masks_coronacases_001.npy --slice 122 --apply_windowing --use_bounding_box --debug 
 ```
 
 You can also process the whole CT image:
 
 ```shell
-$ conda run -n sam --no-capture-output python process_image.py --image_file_path working_data/image_coronacases_001.npy --masks_file_path working_data/masks_coronacases_001.npy --debug 
+$ conda run -n sam --no-capture-output python process_image.py --image_file_path working_data/image_coronacases_001.npy --masks_file_path working_data/masks_coronacases_001.npy --apply_windowing --use_bounding_box --debug 
 ```
 
-You can even process a list of images using the script **process_images.sh**. Use the list inside it to select the images to process. When it finishes, the results will be stored inside the folder **results** in the **working_data** folder, in a series of folders named after each image processed. A summary of the results will be stored in the folder **results**.
+You can even process a list of images using the script **process_images.sh**. Use the list inside it to select the images to process. When it finishes, the results will be stored inside the folder **results** in the **working_data** folder, in a series of folders named after each image processed. A summary of the results will be stored in the folder **results**. If `--debug` is included, the folder **debug** inside **working_data** will contain additional information regarding the segmentation process. The argument `--apply_windowing` enhances the contrast for the lung area, if it wasn't previously applied. Include the argument `--use_bounding_box` if you want to pass it to SAM as an additional prompt.
 
 ## Citing This Work
 
