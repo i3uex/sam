@@ -11,5 +11,4 @@
 - Parallelize **process_image.py**.
 - Wrapper to solve coordinates conventions disparities.
 
-[sam_notebook]: https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb "Object masks from prompts with SAM"
 [nibabel_orientation]: https://nipy.org/nibabel/coordinate_systems.html "Coordinate systems and affines"
