@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Pending tasks already completed, or no longer needed.
 
+### Fixed
+
+- Statistical values calculation for joint results.
+
 ## [1.1.2] - 2023-05-23
 
 ### Added

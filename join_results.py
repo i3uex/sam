@@ -1,3 +1,8 @@
+"""
+Given a collection of results in a series of folders, this scripts collects
+all, joins them, and compiles a series of global results.
+"""
+
 import argparse
 import logging
 from pathlib import Path
@@ -57,7 +62,6 @@ def get_summary(
     :param dry_run: if True, the actions will not be performed.
 
     :return: summary of the actions this script will perform.
-    :rtype: str
     """
 
     logger.info('Get summary')
@@ -66,7 +70,7 @@ def get_summary(
                  f'dry_run={dry_run})')
 
     summary = f'- Results folder path: "{results_folder_path}"\n' \
-              f'- Dry run: {dry_run}\n'
+              f'- Dry run: {dry_run}'
 
     return summary
 
@@ -77,9 +81,9 @@ def get_most_recent_timestamped_file(
 ) -> Union[Path, None]:
     """
     Looks for all the files in a given folder that matches the pattern. Sorts
-    them alphabetically, as a timestamp is part of the name. Return the last
+    them alphabetically, as a timestamp is part of the name. Returns the last
     one, it should be the most recent. If no file matching the pattern is found
-    in the folder, return None.
+    in the folder, returns None.
 
     :param folder_path: path to the folder where to look for the files.
     :param file_pattern: pattern the files must follow.
@@ -109,24 +113,25 @@ def get_most_recent_timestamped_file(
 
     return result
 
+def join_results(results_folder_path: Path) -> Union[Tuple, None]:
 
-def join_results(results_folder_path: Path) -> Union[Path, None]:
     """
     Given a folder, gets every folder inside it with a name that follows a
-    given pattern. Inside, get a CSV file with a name that follows a given
-    pattern and with the latest timestamp. Join all the CSV files obtained
-    this way in a new CSV file. Save it in the results folder, adding a
-    timestamp at the end.
+    given pattern. Inside, gets a CSV file with a name that follows a given
+    pattern and with the latest timestamp. Joins all the CSV files obtained
+    this way in a new CSV file. Includes some new data (i.e., aggregate
+    statistical values). Saves it in the results folder, adding a timestamp at
+    the end.
 
     :param results_folder_path: folder where the results are stored.
 
-    :return: path to the join results file created, None if there were no
+    :return: paths to the join results files created, None if there were no
     results to join.
     """
 
     logger.info('Join results in a new file')
     logger.debug(f'join_results('
-                 f'results_folder_path={results_folder_path})')
+                 f'results_folder_path="{results_folder_path}")')
 
     timestamp = Timestamp.file()
 
@@ -145,6 +150,7 @@ def join_results(results_folder_path: Path) -> Union[Path, None]:
         return None
 
     joint_results = []
+    df_joint_raw_data = None
     for result_folder_path in result_folder_paths:
         raw_data_file_path = get_most_recent_timestamped_file(
             result_folder_path, RawDataFilePattern)
@@ -153,6 +159,15 @@ def join_results(results_folder_path: Path) -> Union[Path, None]:
 
         df_raw_data = pd.read_csv(raw_data_file_path)
         df_results = pd.read_csv(results_file_path)
+
+        # Prepare joint raw data
+        df_raw_data.insert(0, ImageKey, result_folder_path.stem)
+        if df_joint_raw_data is None:
+            df_joint_raw_data = df_raw_data
+        else:
+            df_joint_raw_data = pd.concat([df_joint_raw_data, df_raw_data])
+
+        # Prepare joint results
         result = {
             ImageKey: result_folder_path.name,
             SlicesKey: len(df_raw_data)
@@ -167,27 +182,35 @@ def join_results(results_folder_path: Path) -> Union[Path, None]:
         joint_results.append(result)
 
     df_joint_results = pd.DataFrame(joint_results)
-    if len(joint_results) > 0:
-        # Include aggregate values in the last row
-        averages = {
-            ImageKey: 'average',
-            SlicesKey: df_joint_results[SlicesKey].mean()
-        }
-        for metric_key in MetricKeys:
-            key = f'{metric_key}_{MinKey}'
-            averages[key] = df_joint_results[key].mean()
-            key = f'{metric_key}_{MaxKey}'
-            averages[key] = df_joint_results[key].mean()
-            key = f'{metric_key}_{AverageKey}'
-            averages[key] = df_joint_results[key].mean()
-            key = f'{metric_key}_{StandardDeviationKey}'
-            averages[key] = df_joint_results[key].mean()
-        df_averages = pd.DataFrame([averages])
-        df_joint_results = pd.concat([df_joint_results, df_averages])
-    joint_results_path = results_folder_path / Path(f'results_{timestamp}.csv')
-    df_joint_results.to_csv(joint_results_path, index=False)
 
-    return joint_results_path
+    # Create new file with raw data's statistical values
+    results = [
+        {
+            MetricKey: JaccardKey,
+            MinKey: df_joint_raw_data[JaccardKey].min(),
+            MaxKey: df_joint_raw_data[JaccardKey].max(),
+            AverageKey: df_joint_raw_data[JaccardKey].mean(),
+            StandardDeviationKey: df_joint_raw_data[JaccardKey].std()
+        },
+        {
+            MetricKey: DiceKey,
+            MinKey: df_joint_raw_data[DiceKey].min(),
+            MaxKey: df_joint_raw_data[DiceKey].max(),
+            AverageKey: df_joint_raw_data[DiceKey].mean(),
+            StandardDeviationKey: df_joint_raw_data[DiceKey].std()
+        }
+    ]
+    df_results = pd.DataFrame(results)
+
+    joint_raw_data_path = results_folder_path / Path(f'joint_raw_data_{timestamp}.csv')
+    joint_results_path = results_folder_path / Path(f'joint_results_{timestamp}.csv')
+    results_path = results_folder_path / Path(f'results_{timestamp}.csv')
+
+    df_joint_raw_data.to_csv(joint_raw_data_path, index=False)
+    df_joint_results.to_csv(joint_results_path, index=False)
+    df_results.to_csv(results_path, index=False)
+
+    return joint_results_path, joint_results_path, results_path
 
 
 def main():
@@ -221,8 +244,11 @@ def main():
         print(summarizer.summary)
         return
 
-    result = join_results(results_folder_path=results_folder_path)
-    print(f'Results joint in file: "{result}"')
+    results = join_results(results_folder_path=results_folder_path)
+
+    print(f'Raw data joint in file: "{results[0]}"')
+    print(f'Results joint in file: "{results[1]}"')
+    print(f'Results in file: "{results[2]}"')
 
     print(summarizer.notification_message)
 
