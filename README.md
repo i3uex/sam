@@ -4,7 +4,7 @@
 
 [Juan D. Gutiérrez][jdg], [Roberto Rodriguez-Echeverria][rre], [Emilio Delgado][ed], Miguel Ángel Suero Rodrigo, and [Fernando Sánchez-Figueroa][fsf]
 
-[[`Paper`][paper]][[`Project`][project]][[`Dataset`][dataset]][[`BibTex`][bibtex]]
+[[`Letter`][letter]][[`Project`][project]][[`Dataset`][dataset]][[`BibTex`][bibtex]]
 
 | ![](images/slice_177_prediction_1.png) | ![](images/slice_177_prediction_2.png) | ![](images/slice_177_prediction_3.png) | ![](images/slice_177_prediction_4.png) |
 |----------------------------------------|----------------------------------------|----------------------------------------|----------------------------------------|
@@ -18,7 +18,7 @@
 [ed]: https://i3lab.unex.es/author/emilio-delgado/ "Emilio Delgado"
 [fsf]: https://i3lab.unex.es/author/fernando-sanchez-figueroa/ "Fernando Sánchez-Figueroa"
 
-[paper]: https://i3lab.unex.es/ ""
+[letter]: https://i3lab.unex.es/ ""
 [project]: https://i3lab.unex.es/project/sam-letter/ "SAM's IEEE Signal Processing Letters"
 [dataset]: #dataset "Dataset"
 [bibtex]: #citing-this-work "Citing This Work"
@@ -40,13 +40,13 @@
 Semantic segmentation of medical images presents an enormous potential for diagnosis and surgery.
 However, achieving precise results involves designing and training complex Deep Learning (DL) models specifically for this task.
 
-This paper evaluates [Segment Anything Model (SAM)][sam], a model developed by [Meta][meta] capable of segmenting objects present in virtually any type of image, to segment medical images (specifically, lung computerized tomographies (CTs)).
+This letter evaluates [Segment Anything Model (SAM)][sam], a model developed by [Meta][meta] capable of segmenting objects present in virtually any type of image, to segment medical images (specifically, lung computerized tomographies (CTs)).
 
 Although the dataset used to train SAM does not contain a single lung CT, processing a popular dataset comprised of 20 volumes with a total of 3520 slices using the ViT L version of the model yields an average Jaccard index of 91.45% and an average Dice score of 94.95%, above the 70% mark recommended in the literature, and close to state-of-the art models developed specifically for medical segmentation.
 
 These results are achieved without user interaction by providing the model with positive prompts based on the masks of the dataset used and a negative prompt located in the center of bounding box that contains the masks.
 
-The code provided in this repository provides all the tools needed to replicate the experiments described in the paper.
+The code provided in this repository provides all the tools needed to replicate the experiments described in the letter.
 
 [sam]: https://segment-anything.com/ "Segment Anything Model (SAM): a new AI model from Meta AI that can \"cut out\" any object, in any image, with a single click"
 [meta]: https://ai.facebook.com/
