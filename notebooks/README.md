@@ -7,5 +7,7 @@ Make sure to install [Jupyter][jupyter] if you want to be able to run these note
 The following notebooks are available:
 
 - **get_slice.ipynb**: describes the process of extracting a slice from a given NIfTI.
+- **windowing.ipynb**: shows how to enhance contrast for a particular organ in a given slice of a CT image.
+- **coordinates_conventions.ipynb**: explains the reasons behind the decision to follow the row, column coordinates convention in this project.
 
 [jupyter]: https://jupyter.org/ "Free software, open standards, and web services for interactive computing across all programming languages"
