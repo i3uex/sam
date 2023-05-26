@@ -1,8 +1,6 @@
 # To Do
 
 - Use a different marker for the prompt. A cross instead of a star could be more adequate, but try with different shapes.
-- Update notebooks to better describe the reality of the project.
-  - **image_transformations.ipynb** works, but **process_image.py** doesn't do that.
 - Download only the needed model weights, instead of all of them.
   - Ideally, this should be done from the Python script, via a constant.
   - If `model = "default"`, the script should try to download the corresponding weights, if they were not already there.

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - Review **mask_center.ipynb** notebook.
+- Review **coordinates_conventions.ipynb** notebook.
 - Review **windowing.ipynb** notebook.
 - Review **get_slice.ipynb** notebook.
 - Improve summary.
@@ -17,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Removed
 
+- Obsolete notebooks.
 - Pending tasks already completed, or no longer needed.
 
 ### Fixed
