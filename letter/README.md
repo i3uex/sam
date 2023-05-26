@@ -2,7 +2,7 @@
 
 This folder contains all the resources needed to generate the evidences (figures, statistical values, etcetera) the letter is based on.
 
-### Figure 1
+## Figure 1
 
 From the root folder of this project, execute the script `letter/1_figure_1.sh`. It will:
 
@@ -14,7 +14,7 @@ Then, to prepare it for the letter, you need to remove the white frame from both
 
 Rotate the coronacases one 180º, as it was originally upside down.
 
-### Figure 2
+## Figure 2
 
 From the root folder of this project, execute the script `letter/2_figure_2.sh`. It will:
 
