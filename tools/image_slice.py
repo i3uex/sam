@@ -1,4 +1,5 @@
 import logging
+import os
 import random
 from typing import Tuple
 
@@ -11,6 +12,8 @@ from skimage.measure import regionprops
 from tools.point_location import PointLocation
 
 logger = logging.getLogger(__name__)
+
+MOVE_CENTROIDS_INSIDE_MASKS = bool(os.environ.get('MOVE_CENTROIDS_INSIDE_MASKS', 'True') == str(True))
 
 
 class ImageSlice:
@@ -377,12 +380,16 @@ class ImageSlice:
         original_mask = self.labeled_points == contour_label
         center_of_mass_row, center_of_mass_column = scipy.ndimage.center_of_mass(mask)
         center_of_mass = int(center_of_mass_row), int(center_of_mass_column)
-        if self.__is_point_inside_mask(original_mask, center_of_mass):
-            logger.info("Point is inside mask")
-            center_row, center_column = self.__center_point_in_mask(original_mask, center_of_mass)
+
+        if MOVE_CENTROIDS_INSIDE_MASKS:
+            if self.__is_point_inside_mask(original_mask, center_of_mass):
+                logger.info("Point is inside mask")
+                center_row, center_column = self.__center_point_in_mask(original_mask, center_of_mass)
+            else:
+                logger.info("Point is outside mask")
+                center_row, center_column = self.__move_point_inside_mask(original_mask, center_of_mass)
         else:
-            logger.info("Point is outside mask")
-            center_row, center_column = self.__move_point_inside_mask(original_mask, center_of_mass)
+            center_row, center_column = center_of_mass
 
         return np.array([center_row, center_column])
 
