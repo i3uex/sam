@@ -4,7 +4,7 @@ This folder contains all the resources needed to generate the evidences (figures
 
 ## Figure 1
 
-From the root folder of this project, execute the script **letter/1_figure_1.sh**. It will:
+From the root folder of this project, execute the script **letter/figure_1.sh**. It will:
 
 1. process the slice 122 from the image **coronacases_001.npy**, and copy it to the folder **letter**.
 
@@ -16,7 +16,7 @@ Rotate the coronacases one 180º, as it was originally upside down.
 
 ## Figure 2
 
-From the root folder of this project, execute the script **letter/2_figure_2.sh**. It will:
+From the root folder of this project, execute the script **letter/figure_2.sh**. It will:
 
 1. Disable drawing SAM's prediction, masks contours, bounding box, and negative prompt.
 
