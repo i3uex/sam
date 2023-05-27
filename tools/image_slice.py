@@ -14,6 +14,7 @@ from tools.point_location import PointLocation
 logger = logging.getLogger(__name__)
 
 MOVE_CENTROIDS_INSIDE_MASKS = bool(os.environ.get('MOVE_CENTROIDS_INSIDE_MASKS', 'True') == str(True))
+DISPLACE_NEGATIVE_PROMPT = bool(os.environ.get('DISPLACE_NEGATIVE_PROMPT', 'False') == str(True))
 
 
 class ImageSlice:
@@ -328,6 +329,12 @@ class ImageSlice:
                 self.bounding_box[1] + (self.bounding_box[3] - self.bounding_box[1]) // 2
             ]
             self.centers = np.append(self.centers, [bounding_box_center], axis=0)
+
+        if DISPLACE_NEGATIVE_PROMPT:
+            row, column = self.centers[-1]
+            row += 45
+            negative_prompt = [row, column]
+            self.centers[-1] = negative_prompt
 
     def __add_centers_labels(self):
         """

@@ -48,4 +48,14 @@ Now, execute the script **join_results.py** for the folders **2-coronacases** an
 
 Lastly, execute the script **plots/create_boxplot.py**, changing the paths for each folder's result file. Use the resulting PDF as figure 3.
 
+## Figure 4
 
+From the root folder of this project, execute the script **letter/figure_4.sh**. It will:
+
+1. Process the slice 85 from the image **coronacases_001.npy**, and copy it to the folder **letter** with the name **slice_85_prediction.png**.
+
+2. Displace the negative prompt, and process again the slice 85 from the image **coronacases_001.npy**. Now, and copy it to the folder **letter** with the name **slice_85_prediction_improved.png**.
+
+3. Write down the values returned for Jaccard index and Dice score for both slices. These values are in the letter.
+
+Then, to prepare it for the letter, you need to remove the white frame from both, and rotate them 180º, as they were originally upside down. The resulting images will be 770 width by 770 height.
