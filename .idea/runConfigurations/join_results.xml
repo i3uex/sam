@@ -13,7 +13,7 @@
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/join_results.py" />
-    <option name="PARAMETERS" value="--results_folder_path &quot;/mnt/c/Users/andy/OneDrive - Universidad de Extremadura/Escritorio/join_results/3-radiopaedia&quot;" />
+    <option name="PARAMETERS" value="--results_folder_path working_data/results/1-all" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />
