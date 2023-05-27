@@ -33,7 +33,8 @@
 5. [Working Data](#working-data)
 6. [Image Processing](#image-processing)
 7. [Results Combination](#results-combination)
-8. [Citing This Work](#citing-this-work)
+8. [Letter Evidences](#letter-evidences)
+9. [Citing This Work](#citing-this-work)
 
 ## Introduction
 
@@ -173,6 +174,10 @@ When processing the whole dataset using the script **process_images.sh**, the re
 - **results.csv**: statistical values for each metric (Jaccard index and Dice score) calculated from **joint_raw_data.csv**.
 
 Each file includes a suffix with a timestamp.
+
+## Letter Evidences
+
+The folder **letter** contains all you need to recreate the evidentes included in the letter.
 
 ## Citing This Work
 
