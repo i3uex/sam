@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="create_gif" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+  <configuration default="false" name="join_results" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
     <module name="sam" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
@@ -12,8 +12,8 @@
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tools/create_gif.py" />
-    <option name="PARAMETERS" value="--images working_data/debug/image_coronacases_001" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/join_results.py" />
+    <option name="PARAMETERS" value="--results_folder_path working_data/results/1-all" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

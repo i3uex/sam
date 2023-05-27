@@ -13,6 +13,7 @@ Process a CT image or a slice of it. It performs the following steps:
 
 import argparse
 import logging
+import os
 from pathlib import Path
 from typing import Tuple
 
@@ -40,6 +41,12 @@ LoggingEnabled = True
 DatasetPath = Path('datasets/zenodo')
 DebugFolderPath = Path('debug')
 
+DEBUG_DRAW_SAM_PREDICTION = bool(os.environ.get('DEBUG_DRAW_SAM_PREDICTION', 'True') == str(True))
+DEBUG_DRAW_MASKS_CONTOURS = bool(os.environ.get('DEBUG_DRAW_MASKS_CONTOURS', 'True') == str(True))
+DEBUG_DRAW_BOUNDING_BOX = bool(os.environ.get('DEBUG_DRAW_BOUNDING_BOX', 'True') == str(True))
+DEBUG_DRAW_NEGATIVE_PROMPT = bool(os.environ.get('DEBUG_DRAW_NEGATIVE_PROMPT', 'True') == str(True))
+USE_BOUNDING_BOX = bool(os.environ.get('USE_BOUNDING_BOX', 'True') == str(True))
+
 
 # TODO: add documentation to this method, taken from SAM's notebooks.
 # https://github.com/facebookresearch/segment-anything/blob/main/notebooks/predictor_example.ipynb
@@ -64,10 +71,12 @@ def show_points(coords, labels, ax, marker_size=375):
     columns = positive_points[:, 1]
     ax.scatter(columns, rows, color='green', marker='*', s=marker_size, edgecolor='white',
                linewidth=1.25)
-    rows = negative_points[:, 0]
-    columns = negative_points[:, 1]
-    ax.scatter(columns, rows, color='red', marker='*', s=marker_size, edgecolor='white',
-               linewidth=1.25)
+
+    if DEBUG_DRAW_NEGATIVE_PROMPT:
+        rows = negative_points[:, 0]
+        columns = negative_points[:, 1]
+        ax.scatter(columns, rows, color='red', marker='*', s=marker_size, edgecolor='white',
+                   linewidth=1.25)
 
 
 # TODO: add documentation to this method, taken from SAM's notebooks.
@@ -328,11 +337,17 @@ def process_image_slice(sam_predictor: SamPredictor,
             box = None
 
         sam_predictor.set_image(image_slice.processed_points)
-        mask, score, logits = sam_predictor.predict(
-            point_coords=point_coords,
-            point_labels=point_labels,
-            box=box,
-            multimask_output=False)
+        if USE_BOUNDING_BOX:
+            mask, score, logits = sam_predictor.predict(
+                point_coords=point_coords,
+                point_labels=point_labels,
+                box=box,
+                multimask_output=False)
+        else:
+            mask, score, logits = sam_predictor.predict(
+                point_coords=point_coords,
+                point_labels=point_labels,
+                multimask_output=False)
 
         # Compare original and predicted lung masks
         jaccard, dice = compare_original_and_predicted_masks(
@@ -383,15 +398,18 @@ def process_image_slice(sam_predictor: SamPredictor,
             # Save SAM segmentation
             figure = plt.figure(figsize=(10, 10))
             plt.imshow(image_slice.processed_points)
-            show_mask(mask, plt.gca())
-            for mask_contour in image_slice.contours:
-                plt.plot(mask_contour[:, 1], mask_contour[:, 0], color='green', zorder=0)
+            if DEBUG_DRAW_SAM_PREDICTION:
+                show_mask(mask, plt.gca())
+            if DEBUG_DRAW_MASKS_CONTOURS:
+                for mask_contour in image_slice.contours:
+                    plt.plot(mask_contour[:, 1], mask_contour[:, 0], color='green', zorder=0)
             show_points(
                 coords=image_slice.centers,
                 labels=image_slice.centers_labels,
                 ax=plt.gca())
-            if use_bounding_box:
-                show_box(box=image_slice.get_box(), ax=plt.gca())
+            if DEBUG_DRAW_BOUNDING_BOX:
+                if use_bounding_box:
+                    show_box(box=image_slice.get_box(), ax=plt.gca())
             plt.title(f"Score: {score[0]:.3f}", fontsize=18)
             plt.axis('off')
 
@@ -567,12 +585,14 @@ def get_summary(
     masks_slices = masks.shape[-1]
     if slice_number is not None:
         requested_slice_in_range = slice_number < image_slices
+        slice_information = f'Slice: {slice_number}'
     else:
         requested_slice_in_range = None
+        slice_information = 'Process all slices'
 
     summary = f'- Image file path: "{image_file_path}"\n' \
               f'- Masks file path: "{masks_file_path}"\n' \
-              f'- Slice: {slice_number}\n' \
+              f'- {slice_information}\n' \
               f'- Apply windowing: {apply_windowing}\n' \
               f'- Use masks contours: {use_masks_contours}\n' \
               f'- Use bounding box: {use_bounding_box}\n' \
@@ -580,8 +600,11 @@ def get_summary(
               f'- Dry run: {dry_run}\n' \
               f'- Image slices: {image_slices}\n' \
               f'- Masks slices: {masks_slices}\n' \
-              f'- Equal number of slices: {image_slices == masks_slices}\n' \
-              f'- Requested slice in range: {requested_slice_in_range}'
+              f'- Equal number of slices: {image_slices == masks_slices}'
+
+    if requested_slice_in_range is not None:
+        summary += f'\n' \
+                   f'- Requested slice in range: {requested_slice_in_range}'
 
     return summary
 

@@ -1,3 +1,16 @@
+"""
+Enumeration to simplify SAM usage.
+
+Each item contains the name SAM understands
+and corresponding path to its weights. This way, given an instance of the
+enumeration the rest of needed values are available. Besides, there is no
+possible misspelling as the enumeration values are provided to the developer.
+
+Items are sorted from the smallest (ViT_B) to the biggest (ViT_H). The biggest
+is the more capable version of the model, but also the one that needs more
+resources.
+"""
+
 from collections import namedtuple
 from enum import Enum
 

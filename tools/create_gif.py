@@ -1,3 +1,7 @@
+"""
+Create a GIF from the images in a given folder.
+"""
+
 import argparse
 import logging
 from concurrent.futures import ProcessPoolExecutor
@@ -9,7 +13,12 @@ from tqdm import tqdm
 
 from argparse_helper import ArgumentParserHelper
 
+ResizeFactor = 0.50
 TempPath = Path('temp')
+SourceImagesPattern = '*_prediction.png'
+TempImageSuffix = '_small.png'
+TempImagesPattern = f'*{TempImageSuffix}'
+ResultFileName = 'images.gif'
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +29,6 @@ def parse_arguments() -> Path:
     defaults are provided when possible.
 
     :return: relative path to the folder where the images are stored.
-    :rtype: Path
     """
 
     log.info('Get script arguments')
@@ -50,14 +58,14 @@ def create_gif(images_path: Path):
 
     executor = ProcessPoolExecutor()
 
-    # Create small version of pose images
-    images_paths = sorted(images_path.glob('*_prediction.png'))
+    # Create small version of images
+    images_paths = sorted(images_path.glob(SourceImagesPattern))
     items = len(images_paths)
 
     temp_path = images_path / TempPath
     temp_path.mkdir(parents=True, exist_ok=True)
 
-    progressbar = tqdm(desc='Reducing samples', total=items)
+    progressbar = tqdm(desc='Reducing images', total=items)
 
     futures = []
     for image_path in images_paths:
@@ -71,11 +79,11 @@ def create_gif(images_path: Path):
         progressbar.update()
     progressbar.close()
 
-    # Create GIF from small pose images
+    # Create GIF from small images
     progressbar = tqdm(desc='Creating GIF', total=items)
 
     images = []
-    image_small_paths = sorted(temp_path.glob('*_small.png'))
+    image_small_paths = sorted(temp_path.glob(TempImagesPattern))
     items = len(image_small_paths)
 
     for image_small_path in image_small_paths:
@@ -83,7 +91,7 @@ def create_gif(images_path: Path):
         progressbar.update()
     progressbar.close()
 
-    output_path = images_path / 'images.gif'
+    output_path = images_path / ResultFileName
     imageio.mimsave(str(output_path), images)
 
     # Remove small version of images
@@ -104,11 +112,22 @@ def create_gif(images_path: Path):
 
 
 def reduce_image(image_path: Path):
+    """
+    Reduce image by a given factor, save the result with the same name and a
+    suffix.
+
+    :param image_path: path of the image to be reduced.
+    """
+
+    log.info('Reduce image')
+    log.debug(f'reduce_image('
+              f'image_path="{image_path}")')
+
     image = Image.open(str(image_path))
-    resize_factor = 0.50
+    resize_factor = ResizeFactor
     new_image_size = int(image.size[0] * resize_factor), int(image.size[1] * resize_factor)
     image_resized = image.resize(new_image_size)
-    output_filename = f'{image_path.stem}_small.png'
+    output_filename = f'{image_path.stem}{TempImageSuffix}'
     output_path = image_path.parent / TempPath / output_filename
     image_resized.save(output_path)
 

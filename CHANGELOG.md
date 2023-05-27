@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Instructions to recreate the evidences included in the letter.
+
+### Changed
+
+- Review **mask_center.ipynb** notebook.
+- Review **coordinates_conventions.ipynb** notebook.
+- Review **windowing.ipynb** notebook.
+- Review **get_slice.ipynb** notebook.
+- Improve summary.
+- GIF creation improvements.
+- **README.md** improvements.
+
+### Removed
+
+- Obsolete notebooks.
+- Pending tasks already completed, or no longer needed.
+
+### Fixed
+
+- Statistical values calculation for joint results.
+
 ## [1.1.2] - 2023-05-23
 
 ### Added

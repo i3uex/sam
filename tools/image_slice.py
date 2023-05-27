@@ -1,4 +1,5 @@
 import logging
+import os
 import random
 from typing import Tuple
 
@@ -11,6 +12,10 @@ from skimage.measure import regionprops
 from tools.point_location import PointLocation
 
 logger = logging.getLogger(__name__)
+
+MOVE_CENTROIDS_INSIDE_MASKS = bool(os.environ.get('MOVE_CENTROIDS_INSIDE_MASKS', 'True') == str(True))
+DISPLACE_NEGATIVE_PROMPT = bool(os.environ.get('DISPLACE_NEGATIVE_PROMPT', 'False') == str(True))
+INCLUDE_NEGATIVE_PROMPT = bool(os.environ.get('INCLUDE_NEGATIVE_PROMPT', 'True') == str(True))
 
 
 class ImageSlice:
@@ -212,7 +217,8 @@ class ImageSlice:
                 self.__find_contours_masks()
                 self.__find_contours_centers()
             self.__find_bounding_box()
-            self.__add_negative_prompt()
+            if INCLUDE_NEGATIVE_PROMPT:
+                self.__add_negative_prompt()
             self.__add_centers_labels()
 
     def __find_masks_centers(self):
@@ -326,6 +332,12 @@ class ImageSlice:
             ]
             self.centers = np.append(self.centers, [bounding_box_center], axis=0)
 
+        if DISPLACE_NEGATIVE_PROMPT:
+            row, column = self.centers[-1]
+            row += 45
+            negative_prompt = [row, column]
+            self.centers[-1] = negative_prompt
+
     def __add_centers_labels(self):
         """
         Mark every center as a positive prompt (with 1) but the last
@@ -336,7 +348,8 @@ class ImageSlice:
         logger.debug('__add_centers_labels()')
 
         self.centers_labels = np.ones(len(self.centers))
-        self.centers_labels[-1] = 0
+        if INCLUDE_NEGATIVE_PROMPT:
+            self.centers_labels[-1] = 0
 
     def __find_bounding_box(self):
         """
@@ -377,12 +390,16 @@ class ImageSlice:
         original_mask = self.labeled_points == contour_label
         center_of_mass_row, center_of_mass_column = scipy.ndimage.center_of_mass(mask)
         center_of_mass = int(center_of_mass_row), int(center_of_mass_column)
-        if self.__is_point_inside_mask(original_mask, center_of_mass):
-            logger.info("Point is inside mask")
-            center_row, center_column = self.__center_point_in_mask(original_mask, center_of_mass)
+
+        if MOVE_CENTROIDS_INSIDE_MASKS:
+            if self.__is_point_inside_mask(original_mask, center_of_mass):
+                logger.info("Point is inside mask")
+                center_row, center_column = self.__center_point_in_mask(original_mask, center_of_mass)
+            else:
+                logger.info("Point is outside mask")
+                center_row, center_column = self.__move_point_inside_mask(original_mask, center_of_mass)
         else:
-            logger.info("Point is outside mask")
-            center_row, center_column = self.__move_point_inside_mask(original_mask, center_of_mass)
+            center_row, center_column = center_of_mass
 
         return np.array([center_row, center_column])
 
