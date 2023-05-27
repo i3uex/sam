@@ -34,3 +34,18 @@ To generate the data shown in Table 1:
 
 2. Copy the data from the file **working_data/results/results.csv**. This file will have a time stamp suffix.
 
+## Figure 3
+
+To create the box plot for figure 3, you first need to process the whole dataset. The folder **working_data/results** will contain a folder for each image, and three summary CSV files.
+
+Now, create three folders:
+
+- **1-all**: copy everything in **working_data/results** there.
+- **2-coronacases**: copy only the folders for the corresponding images there.
+- **3-radiopaedia**: copy only the folders for the corresponding images there.
+
+Now, execute the script **join_results.py** for the folders **2-coronacases** and **3-radiopaedia** to create the summary files for each subset. There is a run/debug configuration in PyCharm for the script.
+
+Lastly, execute the script **plots/create_boxplot.py**, changing the paths for each folder's result file. Use the resulting PDF as figure 3.
+
+
