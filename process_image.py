@@ -45,6 +45,7 @@ DEBUG_DRAW_SAM_PREDICTION = bool(os.environ.get('DEBUG_DRAW_SAM_PREDICTION', 'Tr
 DEBUG_DRAW_MASKS_CONTOURS = bool(os.environ.get('DEBUG_DRAW_MASKS_CONTOURS', 'True') == str(True))
 DEBUG_DRAW_BOUNDING_BOX = bool(os.environ.get('DEBUG_DRAW_BOUNDING_BOX', 'True') == str(True))
 DEBUG_DRAW_NEGATIVE_PROMPT = bool(os.environ.get('DEBUG_DRAW_NEGATIVE_PROMPT', 'True') == str(True))
+USE_BOUNDING_BOX = bool(os.environ.get('USE_BOUNDING_BOX', 'True') == str(True))
 
 
 # TODO: add documentation to this method, taken from SAM's notebooks.
@@ -336,11 +337,17 @@ def process_image_slice(sam_predictor: SamPredictor,
             box = None
 
         sam_predictor.set_image(image_slice.processed_points)
-        mask, score, logits = sam_predictor.predict(
-            point_coords=point_coords,
-            point_labels=point_labels,
-            box=box,
-            multimask_output=False)
+        if USE_BOUNDING_BOX:
+            mask, score, logits = sam_predictor.predict(
+                point_coords=point_coords,
+                point_labels=point_labels,
+                box=box,
+                multimask_output=False)
+        else:
+            mask, score, logits = sam_predictor.predict(
+                point_coords=point_coords,
+                point_labels=point_labels,
+                multimask_output=False)
 
         # Compare original and predicted lung masks
         jaccard, dice = compare_original_and_predicted_masks(

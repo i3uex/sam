@@ -59,3 +59,19 @@ From the root folder of this project, execute the script **letter/figure_4.sh**.
 3. Write down the values returned for Jaccard index and Dice score for both slices. These values are in the letter.
 
 Then, to prepare it for the letter, you need to remove the white frame from both, and rotate them 180º, as they were originally upside down. The resulting images will be 770 width by 770 height.
+
+## Figure 5
+
+From the root folder of this project, execute the script **letter/figure_5.sh**. It will:
+
+1. Process the slice 177 from the image **coronacases_001.npy** without improving the centroids location, without using a negative prompt, and without using a bounding box, and copy it to the folder **letter** with the name **slice_177_prediction_1.png**.
+
+2. Process the slice 177 from the image **coronacases_001.npy** improving the centroids location, without using a negative prompt, and without using a bounding box, and copy it to the folder **letter** with the name **slice_177_prediction_2.png**.
+
+3. Process the slice 177 from the image **coronacases_001.npy** improving the centroids location, using a negative prompt, and without using a bounding box, and copy it to the folder **letter** with the name **slice_177_prediction_3.png**.
+
+4. Process the slice 177 from the image **coronacases_001.npy** improving the centroids location, using a negative prompt, and using a bounding box, and copy it to the folder **letter** with the name **slice_177_prediction_4.png**.
+
+5. Write down the values returned for Jaccard index and Dice score for each slice. These values are in the letter.
+
+Then, to prepare it for the letter, you need to remove the white frame from all of them, and rotate them 180º, as they were originally upside down. The resulting images will be 770 width by 770 height.
