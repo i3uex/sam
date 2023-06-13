@@ -6,10 +6,10 @@ import pandas as pd
 
 from tools.files import get_most_recent_timestamped_file
 
-PYPLOT_PLOT_WIDTH = 1280
-PYPLOT_PLOT_HEIGHT = 480
+PYPLOT_PLOT_WIDTH = 640
+PYPLOT_PLOT_HEIGHT = 1280
 PYPLOT_PLOT_DPI = 100
-PYPLOT_SIZE = 18
+PYPLOT_SIZE = 12
 PYPLOT_FONT_FAMILY = 'serif'
 PYPLOT_LEGEND_FONT_SIZE = 'large'
 PYPLOT_LEGEND_FACE_COLOR = 'white'
@@ -81,7 +81,7 @@ def main():
         PYPLOT_PLOT_WIDTH / PYPLOT_PLOT_DPI,
         PYPLOT_PLOT_HEIGHT / PYPLOT_PLOT_DPI)
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figure_size, dpi=PYPLOT_PLOT_DPI)
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=figure_size, dpi=PYPLOT_PLOT_DPI)
 
     # ax = plt.gca()
     ax1.yaxis.set_major_formatter(mtick.PercentFormatter(xmax=1, decimals=False))
@@ -142,7 +142,7 @@ def main():
     ax2.set_title('Dice score')
     ax1.set_xticks([0, 1, 2], ['All', 'Coronacases', 'Radiopaedia'])
     ax2.set_xticks([0, 1, 2], ['All', 'Coronacases', 'Radiopaedia'])
-    ax2.set_yticklabels([])
+    ax1.set_xticklabels([])
     plt.show()
     fig.savefig('letter/boxplot.pdf', bbox_inches='tight')
 
