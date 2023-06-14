@@ -116,18 +116,35 @@ Although this project has been developed with PyCharm on Windows, taking advanta
 
 > **Note:** If you no longer need the Conda environment, just deactivate it with `conda deactivate` and delete it with `conda remove -n sam --all`.
 
-## Dataset
+## Datasets
 
-- **Location:** [Zenodo][dataset_location].
+This project works with two datasets: "COVID-19 CT Lung and Infection Segmentation Dataset" and "Montgomery County X-ray Set".
+
+### COVID-19 CT Lung and Infection Segmentation Dataset
+
+- **Location:** [Zenodo][covid_dataset_location].
 - **Description:** 3520 slices from 20 patients.
 
-Execute the script **scripts/download_dataset.sh** from the root folder of this project to download the dataset:
+Execute the script **scripts/download_covid_dataset.sh** from the root folder of this project to download the dataset:
 
 ```shell
-$ scripts/download_dataset.sh
+$ scripts/download_covid_dataset.sh
 ```
 
-[dataset_location]: https://zenodo.org/record/3757476 "COVID-19 CT Lung and Infection Segmentation Dataset"
+[covid_dataset_location]: https://zenodo.org/record/3757476 "COVID-19 CT Lung and Infection Segmentation Dataset"
+
+### Montgomery County X-ray Set
+
+- **Location:** [Open-i][montgomery_dataset_location]. Look under "I have heard about the Tuberculosis collection. Where can I get those images ?", follow the link for "Montgomery County X-ray Set".
+- **Description:** 138 posterior-anterior x-rays, with their corresponding lung masks.
+
+Execute the script **scripts/download_montgomery_dataset.sh** from the root folder of this project to download the dataset:
+
+```shell
+$ scripts/download_montgomery_dataset.sh
+```
+
+[montgomery_dataset_location]: https://openi.nlm.nih.gov/faq "What is Open-i ?
 
 ## Working Data
 
@@ -136,9 +153,9 @@ $ scripts/download_dataset.sh
 The project includes various run/debug configurations. In order to create the working data from the dataset, you need to execute **nifti_to_numpy** with the required arguments. As a reference, this is the command you have to execute from the command line to create the NumPy files from the NIfTI ones, for one image:
 
 ```shell
-$ conda run -n sam --no-capture-output python nifti_to_numpy.py --input_file_path datasets/zenodo/COVID-19-CT-Seg_20cases/coronacases_001.nii.gz --output_file_path working_data/image_coronacases_001.npy --swap_axes
+$ conda run -n sam --no-capture-output python nifti_to_numpy.py --input_file_path datasets/covid/COVID-19-CT-Seg_20cases/coronacases_001.nii.gz --output_file_path working_data/image_coronacases_001.npy --swap_axes
 
-$ conda run -n sam --no-capture-output python nifti_to_numpy.py --input_file_path datasets/zenodo/Lung_Mask/coronacases_001.nii.gz --output_file_path working_data/masks_coronacases_001.npy --swap_axes
+$ conda run -n sam --no-capture-output python nifti_to_numpy.py --input_file_path datasets/covid/Lung_Mask/coronacases_001.nii.gz --output_file_path working_data/masks_coronacases_001.npy --swap_axes
 ```
 
 The argument `--swap_axes` is included because of the coordinates convention adopted in this project.
