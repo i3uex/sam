@@ -4,12 +4,12 @@
 
 mkdir -p ./datasets
 
-# Download and unpack Zenodo's dataset
-# We are only CTs and lung masks
+# Download and unpack dataset
+# We are only using CTs and lung masks
 
 cd ./datasets || exit
-mkdir ./zenodo
-cd ./zenodo || exit
+mkdir ./covid
+cd ./covid || exit
 
 wget https://zenodo.org/record/3757476/files/COVID-19-CT-Seg_20cases.zip
 wget https://zenodo.org/record/3757476/files/Lung_Mask.zip

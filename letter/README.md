@@ -30,7 +30,7 @@ Then, to prepare it for the letter, you need to remove the white frame from both
 
 To generate the data shown in Table 1:
 
-1. Execute the script **scripts/process_images.sh** from the root folder of this project to process the whole Zenodo dataset.
+1. Execute the script **scripts/process_images.sh** from the root folder of this project to process the whole COVID-19 dataset.
 
 2. Copy the data from the file **working_data/results/results.csv**. This file will have a time stamp suffix.
 

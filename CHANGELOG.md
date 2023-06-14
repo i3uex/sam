@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+- Zotero dataset is now COVID-19 dataset.
 - Review **mask_center.ipynb** notebook.
 - Review **coordinates_conventions.ipynb** notebook.
 - Review **windowing.ipynb** notebook.

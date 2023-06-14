@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 LoggingEnabled = True
 
-DatasetPath = Path('datasets/zenodo')
+DatasetPath = Path('datasets/covid')
 
 
 def parse_arguments() -> Tuple[Path, Path, bool, bool]:

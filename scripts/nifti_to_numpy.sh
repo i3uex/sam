@@ -2,7 +2,7 @@
 
 PYTHON="conda run -n sam --no-capture-output python"
 SCRIPT="nifti_to_numpy.py"
-DATASET_PATH="datasets/zenodo/"
+DATASET_PATH="datasets/covid/"
 IMAGES_PATH="COVID-19-CT-Seg_20cases"
 MASKS_PATH="Lung_Mask"
 WORKING_DATA_PATH="working_data"

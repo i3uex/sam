@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 LoggingEnabled = True
 
-DatasetPath = Path('datasets/zenodo')
+DatasetPath = Path('datasets/covid')
 DebugFolderPath = Path('debug')
 
 DEBUG_DRAW_SAM_PREDICTION = bool(os.environ.get('DEBUG_DRAW_SAM_PREDICTION', 'True') == str(True))
