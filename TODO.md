@@ -9,3 +9,8 @@
 - Wrapper to solve coordinates conventions disparities.
 
 [nibabel_orientation]: https://nipy.org/nibabel/coordinate_systems.html "Coordinate systems and affines"
+
+## Montgomery Dataset
+
+- Something strange happens when downloading this dataset. Name resolution returns a series of IPs, but connection fails with most of them. As a result, download time is five times what it should be.
+- 
