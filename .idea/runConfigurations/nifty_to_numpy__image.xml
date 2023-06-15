@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="nifty_to_numpy: image" type="PythonConfigurationType" factoryName="Python" folderName="nifty_to_numpy">
+  <configuration default="false" name="nifty_to_numpy: image" type="PythonConfigurationType" factoryName="Python" folderName="working_data">
     <module name="sam" />
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
