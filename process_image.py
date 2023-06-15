@@ -122,7 +122,9 @@ def load_image(image_file_path: Path) -> np.array:
     logger.debug(f'load_image('
                  f'image_file_path="{image_file_path}")')
 
-    image = np.load(str(image_file_path))
+    image_npz = np.load(str(image_file_path))
+    image_npz_keys = list(image_npz.keys())
+    image = image_npz[image_npz_keys[0]]
 
     return image
 
@@ -140,7 +142,9 @@ def load_masks(masks_file_path: Path) -> np.array:
     logger.debug(f'load_masks('
                  f'masks_file_path="{masks_file_path}")')
 
-    masks = np.load(str(masks_file_path))
+    masks_npz = np.load(str(masks_file_path))
+    masks_npz_keys = list(masks_npz.keys())
+    masks = masks_npz[masks_npz_keys[0]]
 
     return masks
 
@@ -546,6 +550,8 @@ def parse_arguments() -> Tuple[Path, Path, int, bool, bool, bool, bool, bool]:
 def get_summary(
         image_file_path: Path,
         masks_file_path: Path,
+        image: np.array,
+        masks: np.array,
         slice_number: int,
         apply_windowing: bool,
         use_masks_contours: bool,
@@ -556,8 +562,10 @@ def get_summary(
     """
     Show a summary of the actions this script will perform.
 
-    :param image_file_path: path to the images file.
-    :param masks_file_path: path to the masks file.
+    :param image_file_path: path of the image file.
+    :param masks_file_path: path of the masks file.
+    :param image: array with the CT volume slices.
+    :param masks: array with the CT volume masks.
     :param slice_number: slice to work with.
     :param apply_windowing: if True, apply windowing to the image.
     :param use_masks_contours: if True, get positive prompts from contours.
@@ -572,6 +580,8 @@ def get_summary(
     logger.debug(f'get_summary('
                  f'image_file_path="{image_file_path}", '
                  f'masks_file_path="{masks_file_path}", '
+                 f'image={image.shape}, '
+                 f'masks={masks.shape}, '
                  f'slice_number={slice_number}, '
                  f'apply_windowing={apply_windowing}, '
                  f'use_masks_contours={use_masks_contours}, '
@@ -579,10 +589,10 @@ def get_summary(
                  f'debug={debug}, '
                  f'dry_run={dry_run})')
 
-    image = np.load(str(image_file_path))
     image_slices = image.shape[-1]
-    masks = np.load(str(masks_file_path))
+
     masks_slices = masks.shape[-1]
+
     if slice_number is not None:
         requested_slice_in_range = slice_number < image_slices
         slice_information = f'Slice: {slice_number}'
@@ -637,9 +647,14 @@ def main():
         image_file_path=image_file_path,
         masks_file_path=masks_file_path)
 
+    image = load_image(image_file_path=image_file_path)
+    masks = load_masks(masks_file_path=masks_file_path)
+
     summarizer.summary = get_summary(
         image_file_path=image_file_path,
         masks_file_path=masks_file_path,
+        image=image,
+        masks=masks,
         slice_number=slice_number,
         apply_windowing=apply_windowing,
         use_masks_contours=use_masks_contours,
@@ -654,8 +669,6 @@ def main():
         return
 
     sam_predictor = get_sam_predictor(SamModel.ViT_L)
-    image = load_image(image_file_path=image_file_path)
-    masks = load_masks(masks_file_path=masks_file_path)
 
     if slice_number is None:
         result = process_image(sam_predictor=sam_predictor,

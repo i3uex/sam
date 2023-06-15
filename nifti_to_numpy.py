@@ -119,7 +119,7 @@ def nifty_to_numpy(
         image = image.swapaxes(0, 1)
 
     logger.info('Save the NIfTI image as NumPy')
-    np.save(str(output_file_path), image)
+    np.savez_compressed(str(output_file_path), image)
 
 
 def main():
@@ -151,6 +151,9 @@ def main():
         print('[bold]Summary:[/bold]')
         print(summarizer.summary)
         return
+
+    if not output_file_path.parent.exists():
+        output_file_path.parent.mkdir(parents=True, exist_ok=True)
 
     nifty_to_numpy(
         input_file_path=input_file_path,

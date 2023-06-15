@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+- COVID dataset is now compressed in NPZ format.
+- COVID dataset is now processed inside a folder.
 - Boxplot for IJIMAI.
 
 ## [1.1.3] - 2023-05-27
