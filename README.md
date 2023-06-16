@@ -171,20 +171,20 @@ $ scripts/nifti_to_numpy.sh
 You can process just a slide from a CT image:
 
 ```shell
-$ conda run -n sam --no-capture-output python process_image.py --image_file_path working_data/image_coronacases_001.npy --masks_file_path working_data/masks_coronacases_001.npy --slice 122 --apply_windowing --use_bounding_box --debug 
+$ conda run -n sam --no-capture-output python process_image.py --image_file_path working_data/covid/image_coronacases_001.npy --masks_file_path working_data/covid/masks_coronacases_001.npy --slice 122 --apply_windowing --use_bounding_box --debug 
 ```
 
 You can also process the whole CT image:
 
 ```shell
-$ conda run -n sam --no-capture-output python process_image.py --image_file_path working_data/image_coronacases_001.npy --masks_file_path working_data/masks_coronacases_001.npy --apply_windowing --use_bounding_box --debug 
+$ conda run -n sam --no-capture-output python process_image.py --image_file_path working_data/covid/image_coronacases_001.npy --masks_file_path working_data/covid/masks_coronacases_001.npy --apply_windowing --use_bounding_box --debug 
 ```
 
-You can even process a list of images using the script **process_images.sh**. Use the list inside it to select the images to process. When it finishes, the results will be stored inside the folder **results** in the **working_data** folder, in a series of folders named after each image processed. A summary of the results will be stored in the folder **results**. If `--debug` is included, the folder **debug** inside **working_data** will contain additional information regarding the segmentation process. The argument `--apply_windowing` enhances the contrast for the lung area, if it wasn't previously applied. Include the argument `--use_bounding_box` if you want to pass it to SAM as an additional prompt.
+You can even process a list of images using the script **process_covid_images.sh**. Use the list inside it to select the images to process. When it finishes, the results will be stored inside the folder **results** in the **working_data/covid** folder, in a series of folders named after each image processed. A summary of the results will be stored in the folder **results**. If `--debug` is included, the folder **debug** inside **working_data/covid** will contain additional information regarding the segmentation process. The argument `--apply_windowing` enhances the contrast for the lung area, if it wasn't previously applied. Include the argument `--use_bounding_box` if you want to pass it to SAM as an additional prompt.
 
 ## Results Combination
 
-When processing the whole dataset using the script **process_images.sh**, the results obtained for each CT scan volume would be in its corresponding folder. Instead of leaving the user with the burden of composing aggregate results, the script **join_results.py** performs this task. Just pass the location of the results folder via the argument `--results_folder_path`. The script will create three files:
+When processing the whole dataset using the script **process_covid_images.sh**, the results obtained for each CT scan volume would be in its corresponding folder. Instead of leaving the user with the burden of composing aggregate results, the script **join_results.py** performs this task. Just pass the location of the results folder via the argument `--results_folder_path`. The script will create three files:
 
 - **joint_raw_data.csv**: contains all the raw data, concatenated. The name of the image is included as a new column.
 - **joint_results.csv**: combines the results of each image in a single file.

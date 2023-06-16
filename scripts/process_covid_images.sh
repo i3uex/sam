@@ -3,8 +3,9 @@
 PYTHON="conda run -n sam --no-capture-output python"
 PROCESS_IMAGE_SCRIPT="process_image.py"
 JOIN_RESULTS_SCRIPT="join_results.py"
+DATASET_NAME="covid"
 WORKING_DATA_PATH="working_data"
-RESULTS_PATH=$WORKING_DATA_PATH/"results"
+RESULTS_PATH=$WORKING_DATA_PATH/$DATASET_NAME/"results"
 IMAGE_NAME_INDEX=0
 APPLY_WINDOWING_INDEX=1
 
@@ -37,15 +38,15 @@ for IMAGE_ITEM in "${IMAGE_ITEMS[@]}"; do
   APPLY_WINDOWING="${IMAGE_ITEM_ARRAY[$APPLY_WINDOWING_INDEX]}"
   if [ "$APPLY_WINDOWING" = true ]; then
     $PYTHON $PROCESS_IMAGE_SCRIPT \
-      --image_file_path $WORKING_DATA_PATH/image_"$IMAGE_NAME".npy \
-      --masks_file_path $WORKING_DATA_PATH/masks_"$IMAGE_NAME".npy \
+      --image_file_path $WORKING_DATA_PATH/$DATASET_NAME/image_"$IMAGE_NAME".npy \
+      --masks_file_path $WORKING_DATA_PATH/$DATASET_NAME/masks_"$IMAGE_NAME".npy \
       --apply_windowing \
       --use_bounding_box \
       --debug
   else
     $PYTHON $PROCESS_IMAGE_SCRIPT \
-      --image_file_path $WORKING_DATA_PATH/image_"$IMAGE_NAME".npy \
-      --masks_file_path $WORKING_DATA_PATH/masks_"$IMAGE_NAME".npy \
+      --image_file_path $WORKING_DATA_PATH/$DATASET_NAME/image_"$IMAGE_NAME".npy \
+      --masks_file_path $WORKING_DATA_PATH/$DATASET_NAME/masks_"$IMAGE_NAME".npy \
       --use_bounding_box \
       --debug
   fi
