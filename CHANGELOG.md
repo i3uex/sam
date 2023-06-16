@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Notebook to test Montgomery X-rays.
 - Python script to transform Montgomery dataset to a common format (NPZ).
 - Shell script to download Montgomery dataset.
 
