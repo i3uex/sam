@@ -17,6 +17,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - COVID dataset is now processed inside a folder.
 - Boxplot for IJIMAI.
 
+### Fixed
+
+- When saving Montgomery images as compressed NumPy arrays, dimensions were lost.
+
 ## [1.1.3] - 2023-05-27
 
 ### Added

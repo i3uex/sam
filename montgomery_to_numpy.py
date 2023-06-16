@@ -115,7 +115,7 @@ def process_png(
 
     # Save X-ray as NumPy
     x_ray_image = Image.open(x_ray_path)
-    x_ray_npy = np.array(x_ray_image.getdata())
+    x_ray_npy = np.asarray(x_ray_image)
     x_ray_npy_name = f"image_{x_ray_path.stem}.npz"
     x_ray_npy_path = output_folder_path / Path(x_ray_npy_name)
     np.savez_compressed(str(x_ray_npy_path), x_ray_npy)
