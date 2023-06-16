@@ -115,19 +115,23 @@ def process_png(
 
     # Save X-ray as NumPy
     x_ray_image = Image.open(x_ray_path)
-    x_ray_npy = np.asarray(x_ray_image)
+    x_ray_npy = np.asarray(x_ray_image, dtype=np.int16)
+    x_ray_npy = np.expand_dims(x_ray_npy, axis=-1)
     x_ray_npy_name = f"image_{x_ray_path.stem}.npz"
     x_ray_npy_path = output_folder_path / Path(x_ray_npy_name)
     np.savez_compressed(str(x_ray_npy_path), x_ray_npy)
 
     # Combine left and right lung masks
     left_lung_masks_image = Image.open(left_lung_mask_path)
-    left_lung_masks_npy = np.array(left_lung_masks_image.getdata())
-    left_lung_masks_npy[left_lung_masks_npy == 255] = 1
+    left_lung_masks_npy = np.asarray(left_lung_masks_image, dtype=np.int16).copy()
+    left_lung_masks_npy = np.expand_dims(left_lung_masks_npy, axis=-1)
+    left_lung_masks_npy[left_lung_masks_npy == 1] = 1
+
 
     right_lung_masks_image = Image.open(right_lung_mask_path)
-    right_lung_masks_npy = np.array(right_lung_masks_image.getdata())
-    right_lung_masks_npy[right_lung_masks_npy == 255] = 2
+    right_lung_masks_npy = np.asarray(right_lung_masks_image, dtype=np.int16).copy()
+    right_lung_masks_npy = np.expand_dims(right_lung_masks_npy, axis=-1)
+    right_lung_masks_npy[right_lung_masks_npy == 1] = 2
 
     lung_masks_npy = np.add(left_lung_masks_npy, right_lung_masks_npy)
     lung_masks_npy_name = f"masks_{x_ray_path.stem}.npz"
