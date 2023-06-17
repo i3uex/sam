@@ -46,7 +46,7 @@ PyPlotParameters = {
 
 
 def main():
-    results_folder_path = Path('working_data/results/')
+    results_folder_path = Path('working_data/covid/results/')
     raw_data_file_pattern = 'joint_raw_data_*.csv'
 
     file_path = get_most_recent_timestamped_file(
@@ -144,7 +144,7 @@ def main():
     ax2.set_xticks([0, 1, 2], ['All', 'Coronacases', 'Radiopaedia'])
     ax1.set_xticklabels([])
     plt.show()
-    fig.savefig('letter/boxplot.pdf', bbox_inches='tight')
+    fig.savefig('letter/boxplot_covid.pdf', bbox_inches='tight')
 
 
 if __name__ == '__main__':

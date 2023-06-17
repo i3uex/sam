@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+- COVID dataset boxplot creation now reflects it in its naming.
 - Montgomery's transformation script now adds an extra dimension at the end of each image, so the processing script can work with them.
 - COVID dataset is now compressed in NPZ format.
 - COVID dataset is now processed inside a folder.
