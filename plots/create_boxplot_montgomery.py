@@ -7,7 +7,7 @@ import pandas as pd
 from tools.files import get_most_recent_timestamped_file
 
 PYPLOT_PLOT_WIDTH = 640
-PYPLOT_PLOT_HEIGHT = 1280
+PYPLOT_PLOT_HEIGHT = 1280 / 2
 PYPLOT_PLOT_DPI = 100
 PYPLOT_SIZE = 12
 PYPLOT_FONT_FAMILY = 'serif'
@@ -87,7 +87,7 @@ def main():
         boxprops={'facecolor': 'bisque'},
         ax=ax)
 
-    ax.set_title('Sagital Lung X-rays (Montgomery Dataset)')
+    # ax.set_title('Sagital Lung X-rays (Montgomery Dataset)')
     ax.set_xticks([0, 1], ['Jaccard', 'Dice'])
     plt.show()
     fig.savefig('letter/boxplot_montgomery.pdf', bbox_inches='tight')
