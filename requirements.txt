@@ -1,15 +1,15 @@
 argparse==1.4.0
-humanize==4.6.0
+humanize==4.7.0
 imageio==2.31.1
-matplotlib==3.7.1
+matplotlib==3.7.2
 nibabel==5.1.0
-numpy==1.24.3
-pandas==2.0.2
-pillow==9.5.0
+numpy==1.25.1
+pandas==2.0.3
+pillow==10.0.0
 PyYAML==6.0
 rich==13.4.2
 scikit-image==0.21.0
-scipy==1.10.1
+scipy==1.11.1
 # Uncomment the following requirement after installing them so that PyCharm
 # doesn't complain about a missing package
 torch==2.0.1
