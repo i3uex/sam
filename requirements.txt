@@ -3,11 +3,11 @@ humanize==4.7.0
 imageio==2.31.1
 matplotlib==3.7.2
 nibabel==5.1.0
-numpy==1.25.1
+numpy==1.25.2
 pandas==2.0.3
 pillow==10.0.0
 PyYAML==6.0.1
-rich==13.4.2
+rich==13.5.1
 scikit-image==0.21.0
 scipy==1.11.1
 # Uncomment the following requirement after installing them so that PyCharm
