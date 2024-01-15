@@ -19,7 +19,7 @@
 [fsf]: https://i3lab.unex.es/author/fernando-sanchez-figueroa/ "Fernando Sánchez-Figueroa"
 
 [paper]: https://doi.org/10.1109/ACCESS.2024.3353142 "No More Training: SAM's Zero-Shot Transfer Capabilities for Cost-Efficient Medical Image Segmentation"
-[project]: https://github.com/i3uex/sam "Companion project"
+[project]: https://i3lab.unex.es/project/sam-mis/ "Companion project"
 [dataset]: #dataset "Dataset"
 [bibtex]: #citing-this-work "Citing This Work"
 

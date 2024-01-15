@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+- Update project URL.
 - Replace **letter** with **paper**.
 - README now reflects IEEE Access published the paper.
 - COVID dataset boxplot creation now reflects it in its naming.
