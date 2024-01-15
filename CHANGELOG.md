@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Experiments folder, with not-so-refined scripts.
+- Montgomery dataset boxplot creation script.
+- Script to process all Montgomery dataset images.
+- Notebook to test Montgomery X-rays.
+- Python script to transform Montgomery dataset to a common format (NPZ).
+- Shell script to download Montgomery dataset.
+
+### Changed
+
+- Update project URL.
+- Replace **letter** with **paper**.
+- README now reflects IEEE Access published the paper.
+- COVID dataset boxplot creation now reflects it in its naming.
+- Montgomery's transformation script now adds an extra dimension at the end of each image, so the processing script can work with them.
+- COVID dataset is now compressed in NPZ format.
+- COVID dataset is now processed inside a folder.
+- Boxplot for IJIMAI.
+
+### Fixed
+
+- Montgomery's data was treated as boolean, not integer.
+- When saving Montgomery images as compressed NumPy arrays, dimensions were lost.
+
 ## [1.1.3] - 2023-05-27
 
 ### Added
@@ -12,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+- Zotero dataset is now COVID-19 dataset.
 - Review **mask_center.ipynb** notebook.
 - Review **coordinates_conventions.ipynb** notebook.
 - Review **windowing.ipynb** notebook.
