@@ -90,7 +90,7 @@ def main():
     # ax.set_title('Sagital Lung X-rays (Montgomery Dataset)')
     ax.set_xticks([0, 1], ['Jaccard', 'Dice'])
     plt.show()
-    fig.savefig('letter/boxplot_montgomery.pdf', bbox_inches='tight')
+    fig.savefig('paper/boxplot_montgomery.pdf', bbox_inches='tight')
 
 
 if __name__ == '__main__':

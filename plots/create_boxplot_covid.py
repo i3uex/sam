@@ -144,7 +144,7 @@ def main():
     ax2.set_xticks([0, 1, 2], ['All', 'Coronacases', 'Radiopaedia'])
     ax1.set_xticklabels([])
     plt.show()
-    fig.savefig('letter/boxplot_covid.pdf', bbox_inches='tight')
+    fig.savefig('paper/boxplot_covid.pdf', bbox_inches='tight')
 
 
 if __name__ == '__main__':

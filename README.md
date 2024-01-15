@@ -19,7 +19,7 @@
 [fsf]: https://i3lab.unex.es/author/fernando-sanchez-figueroa/ "Fernando Sánchez-Figueroa"
 
 [paper]: https://doi.org/10.1109/ACCESS.2024.3353142 "No More Training: SAM's Zero-Shot Transfer Capabilities for Cost-Efficient Medical Image Segmentation"
-[project]: https://github.com/i3uex/sam "SAM's IEEE Signal Processing Letters"
+[project]: https://github.com/i3uex/sam "Companion project"
 [dataset]: #dataset "Dataset"
 [bibtex]: #citing-this-work "Citing This Work"
 
@@ -33,7 +33,7 @@
 5. [Working Data](#working-data)
 6. [Image Processing](#image-processing)
 7. [Results Combination](#results-combination)
-8. [Letter Evidences](#letter-evidences)
+8. [Paper Evidences](#paper-evidences)
 9. [Citing This Work](#citing-this-work)
 
 ## Introduction
@@ -192,9 +192,9 @@ When processing the whole dataset using the script **process_covid_images.sh**, 
 
 Each file includes a suffix with a timestamp.
 
-## Letter Evidences
+## Paper Evidences
 
-The folder **letter** contains all you need to recreate the evidentes included in the letter.
+The folder **paper** contains all you need to recreate the evidentes included in the paper.
 
 ## Citing This Work
 

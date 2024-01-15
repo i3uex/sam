@@ -17,7 +17,7 @@
 #  --apply_windowing \
 #  --use_bounding_box \
 #  --debug
-#cp working_data/debug/image_coronacases_001/slice_177_prediction.png letter/slice_177_prediction_1.png
+#cp working_data/debug/image_coronacases_001/slice_177_prediction.png paper/slice_177_prediction_1.png
 
 #MOVE_CENTROIDS_INSIDE_MASKS='True'
 #INCLUDE_NEGATIVE_PROMPT='False'
@@ -36,7 +36,7 @@
 #  --apply_windowing \
 #  --use_bounding_box \
 #  --debug
-#cp working_data/debug/image_coronacases_001/slice_177_prediction.png letter/slice_177_prediction_2.png
+#cp working_data/debug/image_coronacases_001/slice_177_prediction.png paper/slice_177_prediction_2.png
 #
 #MOVE_CENTROIDS_INSIDE_MASKS='True'
 #INCLUDE_NEGATIVE_PROMPT='True'
@@ -55,7 +55,7 @@
 #  --apply_windowing \
 #  --use_bounding_box \
 #  --debug
-#cp working_data/debug/image_coronacases_001/slice_177_prediction.png letter/slice_177_prediction_3.png
+#cp working_data/debug/image_coronacases_001/slice_177_prediction.png paper/slice_177_prediction_3.png
 
 MOVE_CENTROIDS_INSIDE_MASKS='True'
 INCLUDE_NEGATIVE_PROMPT='True'
