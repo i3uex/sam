@@ -1,10 +1,10 @@
-# SAM's Zero-Shot Transfer Capabilities for Medical Image Segmentation
+# No More Training: SAM's Zero-Shot Transfer Capabilities for Cost-Efficient Medical Image Segmentation
 
 **[i3 lab][i3lab]** by **[QSEG][qseg]**@**[UEx][uex]**
 
 [Juan D. Gutiérrez][jdg], [Roberto Rodriguez-Echeverria][rre], [Emilio Delgado][ed], Miguel Ángel Suero Rodrigo, and [Fernando Sánchez-Figueroa][fsf]
 
-[[`Letter`][letter]][[`Project`][project]][[`Dataset`][dataset]][[`BibTex`][bibtex]]
+[[`Paper`][paper]][[`Project`][project]][[`Dataset`][dataset]][[`BibTex`][bibtex]]
 
 | ![](images/slice_177_prediction_1.png) | ![](images/slice_177_prediction_2.png) | ![](images/slice_177_prediction_3.png) | ![](images/slice_177_prediction_4.png) |
 |----------------------------------------|----------------------------------------|----------------------------------------|----------------------------------------|
@@ -18,8 +18,8 @@
 [ed]: https://i3lab.unex.es/author/emilio-delgado/ "Emilio Delgado"
 [fsf]: https://i3lab.unex.es/author/fernando-sanchez-figueroa/ "Fernando Sánchez-Figueroa"
 
-[letter]: https://i3lab.unex.es/ ""
-[project]: https://i3lab.unex.es/project/sam-letter/ "SAM's IEEE Signal Processing Letters"
+[paper]: https://doi.org/10.1109/ACCESS.2024.3353142 "No More Training: SAM's Zero-Shot Transfer Capabilities for Cost-Efficient Medical Image Segmentation"
+[project]: https://github.com/i3uex/sam "SAM's IEEE Signal Processing Letters"
 [dataset]: #dataset "Dataset"
 [bibtex]: #citing-this-work "Citing This Work"
 
@@ -201,10 +201,14 @@ The folder **letter** contains all you need to recreate the evidentes included i
 If you use this work in your research, please cite us with the following BibTeX entry:
 
 ```
-@article{citation-key,
-  title        = {Paper Title},
-  author       = {Guti\'{e}rrez, Juan D. and Rodriguez-Echeverria, Roberto and Delgado, Emilio and Suero Rodrigo, Miguel \'{A}ngel and S\'{a}nchez-Figueroa, Fernando},
-  year         = 2023,
-  journal      = {journal-id}
-}
+@ARTICLE{gutierrez24,
+  author={Gutiérrez, Juan D. and Rodriguez-Echeverria, Roberto and Delgado, Emilio and Rodrigo, Miguel Ángel Suero and Sánchez-Figueroa, Fernando},
+  journal={IEEE Access}, 
+  title={No More Training: SAM’s Zero-Shot Transfer Capabilities for Cost-Efficient Medical Image Segmentation}, 
+  year={2024},
+  volume={},
+  number={},
+  pages={1-1},
+  doi={10.1109/ACCESS.2024.3353142}}
+
 ```
