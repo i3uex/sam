@@ -13,4 +13,3 @@
 ## Montgomery Dataset
 
 - Something strange happens when downloading this dataset. Name resolution returns a series of IPs, but connection fails with most of them. As a result, download time is five times what it should be.
-- 
