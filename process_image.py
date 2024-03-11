@@ -12,6 +12,7 @@ Process a CT image or a slice of it. It performs the following steps:
 """
 
 import argparse
+import json
 import logging
 import os
 from pathlib import Path
@@ -28,6 +29,7 @@ from tqdm import tqdm
 
 from csv_keys import *
 from sam_model import SamModel
+from sam_prompt import SAMPrompt, SAMPromptJSONEncoder
 from tools.argparse_helper import ArgumentParserHelper
 from tools.debug import Debug
 from tools.image_slice import ImageSlice
@@ -281,6 +283,46 @@ def save_results(output_path: Path, list_of_dictionaries: list) -> Tuple[Path, P
     return results_csv_output_path, raw_data_csv_output_path
 
 
+def save_sam_prompts(
+        output_path: Path,
+        sam_prompts: list
+) -> Path:
+    """
+    Save the list of SAM prompts to file in JSON format.
+
+    :param output_path: where the results must be saved.
+    :param sam_prompts: SAM prompts to save.
+
+    :return: Path to the resulting file.
+    """
+
+    logger.info('Save SAM prompts')
+    logger.debug(f'save_sam_prompts('
+                 f'output_path={output_path}, '
+                 f'sam_prompts={sam_prompts})')
+
+    timestamp = Timestamp.file()
+
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    # Save prompts
+    sam_prompts_output_path = output_path / Path(f'sam_prompts_{timestamp}.json')
+    with open(sam_prompts_output_path, 'w') as output_file:
+        json.dump(
+            sam_prompts,
+            output_file,
+            cls=SAMPromptJSONEncoder,
+            sort_keys=False,
+            indent=4,
+            ensure_ascii=True)
+
+    # TODO: check how this works with multiple prompts (only tested with one).
+    # TODO: propagate slice=None (only tested with a slice number, 0 for none).
+    # TODO: use CUDA.
+
+    return sam_prompts_output_path
+
+
 def process_image_slice(sam_predictor: SamPredictor,
                         image: np.array,
                         masks: np.array,
@@ -288,7 +330,7 @@ def process_image_slice(sam_predictor: SamPredictor,
                         apply_windowing: bool,
                         use_masks_contours: bool,
                         use_bounding_box: bool,
-                        debug: Debug) -> dict:
+                        debug: Debug) -> Tuple[dict, SAMPrompt]:
     """
     Process a slice of the image. Returns the result of the analysis.
 
@@ -301,9 +343,10 @@ def process_image_slice(sam_predictor: SamPredictor,
     :param use_bounding_box: if True, include a bounding box in the prompts.
     :param debug: instance of Debug class.
 
-    :return: a dictionary with the number of the slice been processed and the
-    Jaccard index and Dice score between the ground truth and the prediction
-    masks.
+    :return: a tuple with two dictionaries. The first, with the number of the
+    slice been processed and the Jaccard index and Dice score between the
+    ground truth and the prediction masks. The second, with the prompt provided
+    to SAM, so it can perform the segmentation.
     """
 
     logger.info('Process image slice')
@@ -331,27 +374,37 @@ def process_image_slice(sam_predictor: SamPredictor,
     score = []
     jaccard = None
     dice = None
+    sam_prompt = None
 
     if image_slice.labels.size > 1:
         point_coords = image_slice.get_point_coordinates()
         point_labels = image_slice.centers_labels
         if use_bounding_box:
-            box = image_slice.get_box()
+            bounding_box = image_slice.get_box()
         else:
-            box = None
+            bounding_box = None
 
         sam_predictor.set_image(image_slice.processed_points)
         if USE_BOUNDING_BOX:
             mask, score, logits = sam_predictor.predict(
                 point_coords=point_coords,
                 point_labels=point_labels,
-                box=box,
+                box=bounding_box,
                 multimask_output=False)
         else:
             mask, score, logits = sam_predictor.predict(
                 point_coords=point_coords,
                 point_labels=point_labels,
                 multimask_output=False)
+
+        sam_prompt = SAMPrompt(
+            image_file_path=debug.image_file_path,
+            masks_file_path=debug.masks_file_path,
+            slice_number=slice_number,
+            points_cords=point_coords,
+            points_labels=point_labels,
+            bounding_box=bounding_box
+        )
 
         # Compare original and predicted lung masks
         jaccard, dice = compare_original_and_predicted_masks(
@@ -427,7 +480,7 @@ def process_image_slice(sam_predictor: SamPredictor,
         DiceKey: dice
     }
 
-    return result
+    return result, sam_prompt
 
 
 def process_image(sam_predictor: SamPredictor,
@@ -436,7 +489,7 @@ def process_image(sam_predictor: SamPredictor,
                   apply_windowing: bool,
                   use_bounding_box: bool,
                   use_masks_contours: bool,
-                  debug: Debug) -> Tuple[Path, Path]:
+                  debug: Debug) -> Tuple[Path, Path, Path]:
     """
     Process all the slices of a given image. Saves the result as two CSV files,
     one with each slice's result, another with a statistical summary. Returns
@@ -450,7 +503,7 @@ def process_image(sam_predictor: SamPredictor,
     :param use_bounding_box: if True, include a bounding box in the prompts.
     :param debug: instance of Debug class.
 
-    :return: paths where the resulting CSV files are stored.
+    :return: paths where the resulting files are stored.
     """
 
     logger.info('Process image')
@@ -467,23 +520,26 @@ def process_image(sam_predictor: SamPredictor,
     progress_bar = tqdm(desc='Processing CT image slices', total=items)
 
     results = []
+    sam_prompts = []
     for slice_number in range(items):
-        result = process_image_slice(sam_predictor=sam_predictor,
-                                     image=image,
-                                     masks=masks,
-                                     slice_number=slice_number,
-                                     apply_windowing=apply_windowing,
-                                     use_masks_contours=use_masks_contours,
-                                     use_bounding_box=use_bounding_box,
-                                     debug=debug)
+        result, sam_prompt = process_image_slice(sam_predictor=sam_predictor,
+                                                 image=image,
+                                                 masks=masks,
+                                                 slice_number=slice_number,
+                                                 apply_windowing=apply_windowing,
+                                                 use_masks_contours=use_masks_contours,
+                                                 use_bounding_box=use_bounding_box,
+                                                 debug=debug)
         results.append(result)
+        sam_prompts.append(sam_prompt)
         progress_bar.update()
     progress_bar.close()
 
     output_path = debug.image_file_path.parent / Path('results') / Path(debug.image_file_path.stem)
     results_path, raw_data_path = save_results(output_path, results)
+    sam_prompts_path = save_sam_prompts(output_path, sam_prompts)
 
-    return results_path, raw_data_path
+    return results_path, raw_data_path, sam_prompts_path
 
 
 def parse_arguments() -> Tuple[Path, Path, int, bool, bool, bool, bool, bool]:
