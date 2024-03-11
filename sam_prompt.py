@@ -22,6 +22,7 @@ class SAMPrompt:
     ImageFilePathKey = 'image_file_path'
     MasksFilePathKey = 'masks_file_path'
     SliceNumberKey = 'slice_number'
+    PromptKey = 'prompt'
     PointsCoordsKey = 'points_coords'
     PointCoordsRowKey = 'row'
     PointCoordsColumnKey = 'column'
@@ -96,6 +97,7 @@ class SAMPrompt:
         if self.slice_number is not None:
             dictionary[self.SliceNumberKey] = self.slice_number
 
+        prompt_dictionary = {}
         points_coords_list = []
         if self.points_coords is not None and len(self.points_coords) > 0:
             for index, point_coords in enumerate(self.points_coords):
@@ -104,10 +106,10 @@ class SAMPrompt:
                     self.PointCoordsColumnKey: int(point_coords[1]),
                     self.PointCoordsLabelKey: int(self.points_labels[index])
                 })
-            dictionary[self.PointsCoordsKey] = points_coords_list
+            prompt_dictionary[self.PointsCoordsKey] = points_coords_list
 
         if self.bounding_box is not None:
-            dictionary[self.BoundingBoxKey] = {
+            bounding_box = {
                 self.BoundingBoxUpperLeftCornerKey: {
                     self.PointCoordsRowKey: int(self.bounding_box[0]),
                     self.PointCoordsColumnKey: int(self.bounding_box[1])
@@ -117,6 +119,10 @@ class SAMPrompt:
                     self.PointCoordsColumnKey: int(self.bounding_box[3])
                 }
             }
+            prompt_dictionary[self.BoundingBoxKey] = bounding_box
+
+        if len(prompt_dictionary.keys()) > 0:
+            dictionary[self.PromptKey] = prompt_dictionary
 
         return dictionary
 

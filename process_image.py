@@ -316,9 +316,8 @@ def save_sam_prompts(
             indent=4,
             ensure_ascii=True)
 
-    # TODO: check how this works with multiple prompts (only tested with one).
     # TODO: propagate slice=None (only tested with a slice number, 0 for none).
-    # TODO: use CUDA.
+    # TODO: draw points and bounding box on slice to check if it's correct.
 
     return sam_prompts_output_path
 
@@ -374,7 +373,6 @@ def process_image_slice(sam_predictor: SamPredictor,
     score = []
     jaccard = None
     dice = None
-    sam_prompt = None
 
     if image_slice.labels.size > 1:
         point_coords = image_slice.get_point_coordinates()
@@ -411,6 +409,7 @@ def process_image_slice(sam_predictor: SamPredictor,
             original_mask=labeled_points, predicted_mask=mask)
     else:
         logger.info("There are no masks for the current slice")
+        sam_prompt = None
 
     if debug.enabled:
         if image_slice.labels.size > 1:
@@ -531,7 +530,8 @@ def process_image(sam_predictor: SamPredictor,
                                                  use_bounding_box=use_bounding_box,
                                                  debug=debug)
         results.append(result)
-        sam_prompts.append(sam_prompt)
+        if sam_prompt is not None:
+            sam_prompts.append(sam_prompt)
         progress_bar.update()
     progress_bar.close()
 
