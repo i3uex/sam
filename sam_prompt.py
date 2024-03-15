@@ -32,6 +32,9 @@ class SAMPrompt:
     BoundingBoxUpperLeftCornerKey = 'upper_left_corner'
     BoundingBoxLowerRightCornerKey = 'bottom_right_corner'
 
+    PointLabelPositive = 1
+    PointLabelNegative = 0
+
     image_file_path: Path
     masks_file_path: Path
     slice_number: int
