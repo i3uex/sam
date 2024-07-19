@@ -399,6 +399,7 @@ def process_image_slice(sam_predictor: SamPredictor,
             mask, score, logits = sam_predictor.predict(
                 point_coords=point_coords,
                 point_labels=point_labels,
+                box=bounding_box,
                 multimask_output=multimask_output)
         else:
             mask, score, logits = sam_predictor.predict(
