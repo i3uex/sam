@@ -157,8 +157,7 @@ for IMAGE_ITEM in "${IMAGE_ITEMS[@]}"; do
   $PYTHON $PROCESS_IMAGE_SCRIPT \
     --image_file_path $WORKING_DATA_PATH/$DATASET_NAME/image_"$IMAGE_NAME".npz \
     --masks_file_path $WORKING_DATA_PATH/$DATASET_NAME/masks_"$IMAGE_NAME".npz \
-    --use_bounding_box \
-    --debug
+    --use_bounding_box
   ((IMAGE_ITEM_COUNTER=IMAGE_ITEM_COUNTER+1))
 done
 
