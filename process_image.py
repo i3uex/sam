@@ -337,6 +337,7 @@ def process_image_slice(sam_predictor: SamPredictor,
                         apply_windowing: bool,
                         use_masks_contours: bool,
                         use_bounding_box: bool,
+                        multimask_output: bool,
                         debug: Debug) -> Tuple[dict, SAMPrompt]:
     """
     Process a slice of the image. Returns the result of the analysis.
@@ -348,6 +349,7 @@ def process_image_slice(sam_predictor: SamPredictor,
     :param apply_windowing: if True, apply windowing to the image.
     :param use_masks_contours: if True, get positive prompts from contours.
     :param use_bounding_box: if True, include a bounding box in the prompts.
+    :param multimask_output: if True, let SAM return multiple masks.
     :param debug: instance of Debug class.
 
     :return: a tuple with two dictionaries. The first, with the number of the
@@ -365,6 +367,7 @@ def process_image_slice(sam_predictor: SamPredictor,
                  f'apply_windowing={apply_windowing}, '
                  f'use_masks_contours={use_masks_contours}, '
                  f'use_bounding_box={use_bounding_box}, '
+                 f'multimask_output={multimask_output}, '
                  f'debug={debug.enabled})')
 
     points = load_image_slice(image=image, slice_number=slice_number)
@@ -396,13 +399,12 @@ def process_image_slice(sam_predictor: SamPredictor,
             mask, score, logits = sam_predictor.predict(
                 point_coords=point_coords,
                 point_labels=point_labels,
-                box=bounding_box,
-                multimask_output=False)
+                multimask_output=multimask_output)
         else:
             mask, score, logits = sam_predictor.predict(
                 point_coords=point_coords,
                 point_labels=point_labels,
-                multimask_output=False)
+                multimask_output=multimask_output)
 
         sam_prompt = SAMPrompt(
             image_file_path=debug.image_file_path,
@@ -416,7 +418,10 @@ def process_image_slice(sam_predictor: SamPredictor,
         # Compare original and predicted lung masks
         jaccard, dice = compare_original_and_predicted_masks(
             original_mask=labeled_points, predicted_mask=mask)
-        sam_score = score[0]
+        if not multimask_output:
+            sam_score = score[0]
+        else:
+            sam_score = np.max(score)
     else:
         logger.info("There are no masks for the current slice")
         sam_prompt = None
@@ -499,6 +504,7 @@ def process_image(sam_predictor: SamPredictor,
                   apply_windowing: bool,
                   use_bounding_box: bool,
                   use_masks_contours: bool,
+                  multimask_output: bool,
                   debug: Debug) -> Tuple[Path, Path, Path]:
     """
     Process all the slices of a given image. Saves the result as two CSV files,
@@ -511,6 +517,7 @@ def process_image(sam_predictor: SamPredictor,
     :param apply_windowing: if True, apply windowing to the image.
     :param use_masks_contours: if True, get positive prompts from contours.
     :param use_bounding_box: if True, include a bounding box in the prompts.
+    :param multimask_output: if True, let SAM return multiple masks.
     :param debug: instance of Debug class.
 
     :return: paths where the resulting files are stored.
@@ -524,6 +531,7 @@ def process_image(sam_predictor: SamPredictor,
                  f'apply_windowing={apply_windowing}, '
                  f'use_masks_contours={use_masks_contours}, '
                  f'use_bounding_box={use_bounding_box}, '
+                 f'multimask_output={multimask_output}, '
                  f'debug={debug.enabled})')
 
     items = image.shape[-1]
@@ -539,6 +547,7 @@ def process_image(sam_predictor: SamPredictor,
                                                  apply_windowing=apply_windowing,
                                                  use_masks_contours=use_masks_contours,
                                                  use_bounding_box=use_bounding_box,
+                                                 multimask_output=multimask_output,
                                                  debug=debug)
         results.append(result)
         if sam_prompt is not None:
@@ -553,15 +562,15 @@ def process_image(sam_predictor: SamPredictor,
     return results_path, raw_data_path, sam_prompts_path
 
 
-def parse_arguments() -> Tuple[Path, Path, int, bool, bool, bool, bool, bool]:
+def parse_arguments() -> Tuple[Path, Path, int, bool, bool, bool, bool, bool, bool]:
     """
     Parse arguments passed via command line, returning them formatted. Adequate
     defaults are provided when possible.
 
     :return: path of the image file, path of the masks file, slice to work
     with, perform windowing on the image slice, use mask contours to get the
-    positive point prompts, use a bounding box as a prompt, dry run option,
-    debug option.
+    positive point prompts, use a bounding box as a prompt, let SAM return
+    multiple masks, dry run option, debug option.
     """
 
     logger.info('Get script arguments')
@@ -587,6 +596,9 @@ def parse_arguments() -> Tuple[Path, Path, int, bool, bool, bool, bool, bool]:
     argument_parser.add_argument('-b', '--use_bounding_box',
                                  action='store_true',
                                  help='include a bounding box in the prompts')
+    argument_parser.add_argument('-o', '--multimask_output',
+                                 action='store_true',
+                                 help='enable multiple masks')
     argument_parser.add_argument('-n', '--dry_run',
                                  action='store_true',
                                  help='show what would be done, do not do it')
@@ -606,11 +618,12 @@ def parse_arguments() -> Tuple[Path, Path, int, bool, bool, bool, bool, bool]:
     apply_windowing = arguments.apply_windowing
     use_masks_contours = arguments.use_masks_contours
     use_bounding_box = arguments.use_bounding_box
+    multimask_output = arguments.multimask_output
     dry_run = arguments.dry_run
     debug = arguments.debug
 
     return Path(image_file_path), Path(masks_file_path), \
-        slice_number, apply_windowing, use_masks_contours, use_bounding_box, \
+        slice_number, apply_windowing, use_masks_contours, use_bounding_box, multimask_output, \
         dry_run, debug
 
 
@@ -623,6 +636,7 @@ def get_summary(
         apply_windowing: bool,
         use_masks_contours: bool,
         use_bounding_box: bool,
+        multimask_output: bool,
         dry_run: bool,
         debug: Debug
 ) -> str:
@@ -637,6 +651,7 @@ def get_summary(
     :param apply_windowing: if True, apply windowing to the image.
     :param use_masks_contours: if True, get positive prompts from contours.
     :param use_bounding_box: if True, include a bounding box in the prompts.
+    :param multimask_output: if True, let SAM return multiple masks.
     :param dry_run: if True, the actions will not be performed.
     :param debug: instance of Debug class.
 
@@ -653,6 +668,7 @@ def get_summary(
                  f'apply_windowing={apply_windowing}, '
                  f'use_masks_contours={use_masks_contours}, '
                  f'use_bounding_box={use_bounding_box}, '
+                 f'multimask_output={multimask_output}, '
                  f'debug={debug}, '
                  f'dry_run={dry_run})')
 
@@ -673,6 +689,7 @@ def get_summary(
               f'- Apply windowing: {apply_windowing}\n' \
               f'- Use masks contours: {use_masks_contours}\n' \
               f'- Use bounding box: {use_bounding_box}\n' \
+              f'- Let SAM return multiple masks: {multimask_output}\n' \
               f'- Debug: {debug.enabled}\n' \
               f'- Dry run: {dry_run}\n' \
               f'- Image slices: {image_slices}\n' \
@@ -706,7 +723,7 @@ def main():
     summarizer = Summarizer()
 
     image_file_path, masks_file_path, slice_number, \
-        apply_windowing, use_masks_contours, use_bounding_box, \
+        apply_windowing, use_masks_contours, use_bounding_box, multimask_output, \
         dry_run, debug_enabled = parse_arguments()
 
     debug = Debug(
@@ -726,6 +743,7 @@ def main():
         apply_windowing=apply_windowing,
         use_masks_contours=use_masks_contours,
         use_bounding_box=use_bounding_box,
+        multimask_output=multimask_output,
         debug=debug,
         dry_run=dry_run)
 
@@ -744,6 +762,7 @@ def main():
                                apply_windowing=apply_windowing,
                                use_masks_contours=use_masks_contours,
                                use_bounding_box=use_bounding_box,
+                               multimask_output=multimask_output,
                                debug=debug)
         print(f'Results saved to: "{str(result[0])}"')
         print(f'Raw data saved to: "{str(result[1])}"')
@@ -755,6 +774,7 @@ def main():
                                      apply_windowing=apply_windowing,
                                      use_masks_contours=use_masks_contours,
                                      use_bounding_box=use_bounding_box,
+                                     multimask_output=multimask_output,
                                      debug=debug)
         print(f'Jaccard index: {result[JaccardKey]:.4f}')
         print(f'Dice score: {result[DiceKey]:.4f}')

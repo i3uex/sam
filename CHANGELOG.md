@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Enable SAM's multiple masks output via script arguments.
 - Save SAM's score to results.
 - Save prompts SAM uses to segment each slice/image into a separate file.
 
