@@ -44,8 +44,8 @@ for IMAGE_ITEM in "${IMAGE_ITEMS[@]}"; do
       --use_bounding_box
   else
     $PYTHON $PROCESS_IMAGE_SCRIPT \
-      --image_file_path $WORKING_DATA_PATH/$DATASET_NAME/image_"$IMAGE_NAME".npy \
-      --masks_file_path $WORKING_DATA_PATH/$DATASET_NAME/masks_"$IMAGE_NAME".npy \
+      --image_file_path $WORKING_DATA_PATH/$DATASET_NAME/image_"$IMAGE_NAME".npz \
+      --masks_file_path $WORKING_DATA_PATH/$DATASET_NAME/masks_"$IMAGE_NAME".npz \
       --use_bounding_box
   fi
 done
