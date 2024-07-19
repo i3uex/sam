@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Save SAM's score to results.
+- Save prompts SAM uses to segment each slice/image into a separate file.
 
 ## [1.1.4] - 2024-01-15
 
