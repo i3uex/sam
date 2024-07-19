@@ -2,6 +2,7 @@ SliceNumberKey = 'slice'
 MetricKey = 'metric'
 JaccardKey = 'jaccard'
 DiceKey = 'dice'
+SAMScoreKey = 'sam_score'
 MetricKeys = [JaccardKey, DiceKey]
 MinKey = 'min'
 MaxKey = 'max'

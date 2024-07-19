@@ -269,8 +269,16 @@ def save_results(output_path: Path, list_of_dictionaries: list) -> Tuple[Path, P
         AverageKey: dice_column.mean(),
         StandardDeviationKey: dice_column.std()
     }
+    sam_score_column = df_raw_data[SAMScoreKey]
+    sam_score_results = {
+        MetricKey: SAMScoreKey,
+        MinKey: sam_score_column.min(),
+        MaxKey: sam_score_column.max(),
+        AverageKey: sam_score_column.mean(),
+        StandardDeviationKey: sam_score_column.std()
+    }
 
-    results = [jaccard_results, dice_results]
+    results = [jaccard_results, dice_results, sam_score_results]
 
     results_csv_output_path = output_path / Path(f'results_{timestamp}.csv')
     df_results = pd.DataFrame(results)
@@ -373,6 +381,7 @@ def process_image_slice(sam_predictor: SamPredictor,
     score = []
     jaccard = None
     dice = None
+    sam_score = None
 
     if image_slice.labels.size > 1:
         point_coords = image_slice.get_point_coordinates()
@@ -407,6 +416,7 @@ def process_image_slice(sam_predictor: SamPredictor,
         # Compare original and predicted lung masks
         jaccard, dice = compare_original_and_predicted_masks(
             original_mask=labeled_points, predicted_mask=mask)
+        sam_score = score[0]
     else:
         logger.info("There are no masks for the current slice")
         sam_prompt = None
@@ -476,7 +486,8 @@ def process_image_slice(sam_predictor: SamPredictor,
     result = {
         SliceNumberKey: slice_number,
         JaccardKey: jaccard,
-        DiceKey: dice
+        DiceKey: dice,
+        SAMScoreKey: sam_score
     }
 
     return result, sam_prompt
