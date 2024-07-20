@@ -407,6 +407,11 @@ def process_image_slice(sam_predictor: SamPredictor,
                 point_labels=point_labels,
                 multimask_output=multimask_output)
 
+        if multimask_output:
+            max_index = np.argmax(score)
+            mask = mask[[max_index],:,:]
+            score = score[max_index]
+
         sam_prompt = SAMPrompt(
             image_file_path=debug.image_file_path,
             masks_file_path=debug.masks_file_path,
@@ -777,8 +782,10 @@ def main():
                                      use_bounding_box=use_bounding_box,
                                      multimask_output=multimask_output,
                                      debug=debug)
-        print(f'Jaccard index: {result[JaccardKey]:.4f}')
-        print(f'Dice score: {result[DiceKey]:.4f}')
+        print(f'Results saved to: "{str(result[0])}"')
+        print(f'Prompt saved to: "{str(result[1])}"')
+        print(f'Jaccard index: {result[0][JaccardKey]:.4f}')
+        print(f'Dice score: {result[0][DiceKey]:.4f}')
 
     print(summarizer.notification_message)
 
