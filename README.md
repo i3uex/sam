@@ -86,35 +86,47 @@ Although this project has been developed with PyCharm on Windows, taking advanta
     $ conda activate sam
     ```
 
-4. Install PyTorch, Torchvision, and Torchaudio:
+4. [Install CUDA][cuda_installation]:
 
     ```shell
-    $ pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+    $ conda install nvidia/label/cuda-11.8.0::cuda
     ```
 
-5. Install SAM:
+    [cuda_installation]: https://anaconda.org/nvidia/cuda "CUDA Installation"
+
+5. [Install PyTorch, Torchvision, and Torchaudio][pytorch_installation]:
+
+    ```shell
+    $ pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+    ```
+
+    [pytorch_installation]: https://pytorch.org/get-started/previous-versions/#v201 "Installing previous versions of PyTorch"
+
+6. Install SAM:
 
     ```shell
     $ pip install git+https://github.com/facebookresearch/segment-anything.git
     ```
 
-6. Install this project's requirements:
+7. Install this project's requirements:
 
     ```shell
     $ pip install -r requirements.txt
     ```
 
-7. Execute the shell script **scripts/download_model_checkpoints.sh** to get SAM's model checkpoints:
+    > **Note**: When you finish the workspace configuration, remember to remove the comment from the Torch line in the requirements file to avoid a warning from PyCharm.
+
+8. Execute the shell script **scripts/download_model_checkpoints.sh** to get SAM's model checkpoints:
 
     ```shell
     $ scripts/download_checkpoints.sh
     ```
 
-8. Configure PyCharm. If you are working on Windows, make sure you use WSL and that your interpreter is also based on WSL.
+9. Configure PyCharm. If you are working on Windows, make sure you use WSL and that your interpreter is also based on WSL.
 
     > **Note:** Be careful with the EOL configuration in you IDE. Always choose LF instead of CRLF to avoid compatibility issues, as this is a multiplatform project.
 
-> **Note:** If you no longer need the Conda environment, just deactivate it with `conda deactivate` and delete it with `conda remove -n sam --all`.
+> **Note:** If you no longer need the Conda environment, just deactivate it with `conda deactivate` and delete it with `conda remove --name sam --all`.
 
 ## Datasets
 
